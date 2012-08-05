@@ -16,9 +16,9 @@ def plotstuff(cell):
     fig = pl.figure(figsize=[12, 8])
     
     ax = fig.add_axes([0.1, 0.7, 0.5, 0.2])
-    ax.plot(cell.tvec,cell.somav)
+    ax.plot(cell.tvec,cell.imem[0,:])
     ax.set_xlabel('Time [ms]')
-    ax.set_ylabel('Soma pot. [mV]')
+    ax.set_ylabel('Soma trans. current')
     
     ax = fig.add_axes([0.1, 0.4, 0.5, 0.2])
     for i in xrange(len(cell.synapses)):
@@ -116,7 +116,7 @@ clampparams = {
     'record_current' : True,
     'amp' : 400e-2, #[mA]
     'dur' : 50,
-    'delay' :2,
+    'delay' :4,
     #'freq' : 10,
     #'phase' : 0,
     #'pkamp' : 300e-3,
@@ -131,8 +131,6 @@ simulationParameters = {
 }
 
 def get_cell(do_simulation = True):
-
-
     def insert_synapses(synparams, section, n, spTimesFun, args):
         #find n compartments to insert synapses onto
         idx = cell.get_rand_idx_area_norm(section=section, nidx=n)
@@ -165,9 +163,11 @@ def get_cell(do_simulation = True):
         insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
         cell.simulate(**simulationParameters)
         np.save('imem.npy', cell.imem)
+        np.save('tvec.npy', cell.tvec)
         plotstuff(cell)
     else:
         cell.imem = np.load('imem.npy')
+        cell.tvec = np.load('tvec.npy')
     return cell
 
 def plot_cell_3D(cell):
@@ -240,38 +240,40 @@ def plot_cell_3D(cell):
 
     os.system('mencoder "mf://%s/anim_imem2/*.png" -mf type=png:fps=10 -ovc lavc -o output.avi'% savefolder)
 
-def simple_plot_2D(cell):
+def simple_plot_2D(cell, start_t, stop_t):
     import matplotlib.animation as animation
     import matplotlib.pyplot as plt
-
     def init():
- 
         scat = ax.scatter(y,z, c=imem[:,0], s=5*comp_size)
         time_text.set_text('')
         return scat, time_text
     def update_plot(i, data, scat):
-        scat.set_array(data[i])
-        time_text.set_text(time_template%(dt*i))
+        scat.set_array(data[:,i])
+        time_text.set_text(time_template%(t_array[i]))
         return scat, time_text
-    fig = plt.figure()
+    fig = plt.figure(figsize=[5,11])
     ax = fig.add_subplot(111)
-    n_tsteps = len(cell.imem[0,:])
+    start_t_ixd = np.argmin(np.abs(cell.tvec - start_t))
+    stop_t_ixd  = np.argmin(np.abs(cell.tvec - stop_t))
+    t_array = cell.tvec[start_t_ixd:stop_t_ixd]
+    imem = cell.imem[:,start_t_ixd:stop_t_ixd]
+    n_tsteps = len(imem[0,:])
     x = cell.xmid
     y = cell.ymid
     z = cell.zmid
     dt = cell.timeres_python
-    imem = cell.imem
     comp_size = cell.diam
-    time_template = 'time = %.1fms'
+    time_template = 'time = %.3fms'
     time_text = ax.text(0, max(z)*1.1, '')
-    scat = ax.scatter(y,z, c=imem[:,0], s=5*comp_size)
+    scat = ax.scatter(y,z, c=imem[:,0], s=10*comp_size)
     ax.axis('equal')
+    pl.colorbar(scat)
     ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
-                                  fargs=(imem, scat), blit=True, init_func=init)
+                                  fargs=(imem, scat),blit=True, interval=.01, init_func=init)
+    #ani.save('simple_plot.mp4')
+    ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')
     pl.show()
-   
-    #pl.savefig('example_fig.png')
 
 if __name__ == '__main__':
     cell = get_cell(do_simulation = False)
-    simple_plot_2D(cell)
+    simple_plot_2D(cell, 35,42)

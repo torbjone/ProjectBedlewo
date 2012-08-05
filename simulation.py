@@ -1,5 +1,3 @@
-#Changed file
-
 
 import matplotlib.pylab as pl
 import numpy as np
@@ -39,10 +37,7 @@ def plotstuff(cell):
     pl.axis(pl.array(pl.axis())*0.8)
     ax.set_xticks([])
     ax.set_yticks([])
-    pl.savefig('example4_fig.png')
-
-
-
+    pl.savefig('example_fig.png')
 
 cellParameters = {
     'morphology' : '070603c2_copy.hoc',
@@ -247,5 +242,5 @@ def plot_cell(cell):
     os.system('mencoder "mf://%s/anim_imem2/*.png" -mf type=png:fps=10 -ovc lavc -o output.avi'% savefolder)
 
 if __name__ == '__main__':
-    cell = get_cell(do_simulation = False)
+    cell = get_cell(do_simulation = True)
     plot_cell(cell)

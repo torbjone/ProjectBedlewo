@@ -163,7 +163,6 @@ def get_cell(do_simulation = True):
         insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
         insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
         insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
-
         cell.simulate(**simulationParameters)
         np.save('imem.npy', cell.imem)
         plotstuff(cell)
@@ -171,7 +170,7 @@ def get_cell(do_simulation = True):
         cell.imem = np.load('imem.npy')
     return cell
 
-def plot_cell(cell):
+def plot_cell_3D(cell):
     savefolder = 'savefiles'
     ## #######MAYAVISTUFF###############################################
     from visio import VisioAnim as Visio
@@ -241,6 +240,38 @@ def plot_cell(cell):
 
     os.system('mencoder "mf://%s/anim_imem2/*.png" -mf type=png:fps=10 -ovc lavc -o output.avi'% savefolder)
 
+def simple_plot_2D(cell):
+    import matplotlib.animation as animation
+    import matplotlib.pyplot as plt
+
+    def init():
+ 
+        scat = ax.scatter(y,z, c=imem[:,0], s=5*comp_size)
+        time_text.set_text('')
+        return scat, time_text
+    def update_plot(i, data, scat):
+        scat.set_array(data[i])
+        time_text.set_text(time_template%(dt*i))
+        return scat, time_text
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    n_tsteps = len(cell.imem[0,:])
+    x = cell.xmid
+    y = cell.ymid
+    z = cell.zmid
+    dt = cell.timeres_python
+    imem = cell.imem
+    comp_size = cell.diam
+    time_template = 'time = %.1fms'
+    time_text = ax.text(0, max(z)*1.1, '')
+    scat = ax.scatter(y,z, c=imem[:,0], s=5*comp_size)
+    ax.axis('equal')
+    ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
+                                  fargs=(imem, scat), blit=True, init_func=init)
+    pl.show()
+   
+    #pl.savefig('example_fig.png')
+
 if __name__ == '__main__':
-    cell = get_cell(do_simulation = True)
-    plot_cell(cell)
+    cell = get_cell(do_simulation = False)
+    simple_plot_2D(cell)

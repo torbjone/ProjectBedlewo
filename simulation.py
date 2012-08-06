@@ -10,7 +10,7 @@ pl.rcParams.update({'font.size' : 12,
     'wspace' : 0.5, 'hspace' : 0.5})
 
 #seed for random generation
-pl.seed(999)
+pl.seed(99)
 
 def plotstuff(cell):
     fig = pl.figure(figsize=[12, 8])
@@ -58,7 +58,7 @@ cellParameters = {
     'timeres_NEURON' : 2**-5,   # dt of LFP and NEURON simulation.
     'timeres_python' : 2**-5,
     'tstartms' : -10,          #start time, recorders start at t=0
-    'tstopms' : 100,           #stop time of simulation
+    'tstopms' : 105,           #stop time of simulation
     'custom_code'  : ['apical_simulation.hoc'],        # will if given list of files run this file
 }
 
@@ -118,10 +118,10 @@ insert_synapses_GABA_A_args = {
 
 
 clampparams = {
-    'idx' : 222,
+    'idx' : 250,
     'record_current' : True,
-    'amp' : 400e-2, #[mA]
-    'dur' : 50,
+    'amp' : 0.0, #[nA]
+    'dur' : 500,
     'delay' :4,
     #'freq' : 10,
     #'phase' : 0,
@@ -169,10 +169,12 @@ def get_cell(output_folder, do_simulation = True):
         insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
         cell.simulate(**simulationParameters)
         np.save(output_folder + 'imem.npy', cell.imem)
+        np.save(output_folder + 'vmem.npy', cell.vmem)
         np.save(output_folder + 'tvec.npy', cell.tvec)
         plotstuff(cell)
 
     else:
+        cell.vmem = np.load(output_folder + 'vmem.npy')
         cell.imem = np.load(output_folder + 'imem.npy')
         cell.tvec = np.load(output_folder + 'tvec.npy')
     return cell
@@ -263,12 +265,11 @@ def simple_plot_2D(cell, plot_range):
         time_bar.set_data([t_array[i], t_array[i]], [0,9])
         stim_point.set_data([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]])
         return scat, time_text,time_bar, stim_point
-
     start_t, stop_t = plot_range    
     start_t_ixd = np.argmin(np.abs(cell.tvec - start_t))
     stop_t_ixd  = np.argmin(np.abs(cell.tvec - stop_t))
     t_array = cell.tvec[start_t_ixd:stop_t_ixd]
-    imem = cell.imem[:,start_t_ixd:stop_t_ixd]
+    imem = cell.vmem[:,start_t_ixd:stop_t_ixd]
     n_tsteps = len(imem[0,:])
     x = cell.xmid
     y = cell.ymid
@@ -285,14 +286,13 @@ def simple_plot_2D(cell, plot_range):
     #ax.axis([-200, 400, -300,1000])
     pl.colorbar(scat)
     ax2 = fig.add_axes([0.7,0.6,0.25,0.3])
-    ax2.axis([start_t, stop_t, 0,9])
+    ax2.axis([start_t, stop_t, np.min(imem[0,:]), np.max(imem[0,:])])
     ax2.plot(t_array, imem[0,:])
     time_bar, = ax2.plot([start_t,start_t], [0,9])
     time_template = 'time = %.3fms'
     time_text = ax.text(0, max(z)*1.1, '')
-    
     ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
-                                  fargs=(imem, scat, time_text, time_bar, stim_point),blit=True, interval=.01, init_func=init)
+                                  fargs=(imem, scat, time_text, time_bar, stim_point), blit=True, interval=.1, init_func=init)
     #ani.save('simple_plot.mp4')
     #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()
@@ -305,8 +305,8 @@ def plot_cell_compartments(cell):
 
 if __name__ == '__main__':
     output_folder = 'larkum_sim/'
-    do_simulation = False
-    plot_range = [0,100]
+    do_simulation = True
+    plot_range = [94,99]
     try:
         os.mkdir(output_folder)
     except(OSError):
@@ -316,4 +316,4 @@ if __name__ == '__main__':
             print "Loading simulation files..."
     cell = get_cell(output_folder, do_simulation)
     #plot_cell_compartments(cell)
-    #simple_plot_2D(cell, plot_range)
+    simple_plot_2D(cell, plot_range)

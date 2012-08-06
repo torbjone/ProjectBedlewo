@@ -244,15 +244,17 @@ def simple_plot_2D(cell, start_t, stop_t):
     import matplotlib.animation as animation
     import matplotlib.pyplot as plt
     def init():
-        scat = ax.scatter(y,z, c=imem[:,0], s=5*comp_size)
+        scat = ax.scatter(y,z, c=imem[:,0], s=10*comp_size)
+        ax2.plot(t_array, imem[0,:])
+        time_bar = ax2.plot([start_t,start_t], [0,9])
         time_text.set_text('')
         return scat, time_text
-    def update_plot(i, data, scat):
+    def update_plot(i, data, scat, time_bar):
         scat.set_array(data[:,i])
         time_text.set_text(time_template%(t_array[i]))
-        return scat, time_text
-    fig = plt.figure(figsize=[5,11])
-    ax = fig.add_subplot(111)
+        time_bar.set_data([t_array[i], t_array[i]], [0,9])
+        return scat, time_text,time_bar
+   
     start_t_ixd = np.argmin(np.abs(cell.tvec - start_t))
     stop_t_ixd  = np.argmin(np.abs(cell.tvec - stop_t))
     t_array = cell.tvec[start_t_ixd:stop_t_ixd]
@@ -263,15 +265,21 @@ def simple_plot_2D(cell, start_t, stop_t):
     z = cell.zmid
     dt = cell.timeres_python
     comp_size = cell.diam
+    fig = plt.figure(figsize=[7,11])
+    ax = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+    ax2.axis([start_t, stop_t, 0,9])
+    #ax2.plot(t_array, imem[0,:])
+    time_bar, = ax2.plot([start_t,start_t], [0,9])
     time_template = 'time = %.3fms'
     time_text = ax.text(0, max(z)*1.1, '')
     scat = ax.scatter(y,z, c=imem[:,0], s=10*comp_size)
     ax.axis('equal')
     pl.colorbar(scat)
     ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
-                                  fargs=(imem, scat),blit=True, interval=.01, init_func=init)
+                                  fargs=(imem, scat, time_bar),blit=True, interval=.01, init_func=init)
     #ani.save('simple_plot.mp4')
-    ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')
+    #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()
 
 if __name__ == '__main__':

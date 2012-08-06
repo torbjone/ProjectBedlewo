@@ -118,7 +118,7 @@ insert_synapses_GABA_A_args = {
 
 
 clampparams = {
-    'idx' : 600,
+    'idx' : 222,
     'record_current' : True,
     'amp' : 400e-2, #[mA]
     'dur' : 50,
@@ -297,10 +297,16 @@ def simple_plot_2D(cell, plot_range):
     #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()
 
+def plot_cell_compartments(cell):
+    
+    for comp_idx in xrange(len(cell.xmid)):
+        pl.plot(cell.xmid[comp_idx], cell.zmid[comp_idx], marker='$%i$'%comp_idx, color='b', markersize=10)
+    pl.show()
+
 if __name__ == '__main__':
     output_folder = 'larkum_sim/'
-    do_simulation = True
-    plot_range = [38,100]
+    do_simulation = False
+    plot_range = [0,100]
     try:
         os.mkdir(output_folder)
     except(OSError):
@@ -309,4 +315,5 @@ if __name__ == '__main__':
         else:
             print "Loading simulation files..."
     cell = get_cell(output_folder, do_simulation)
-    simple_plot_2D(cell, plot_range)
+    #plot_cell_compartments(cell)
+    #simple_plot_2D(cell, plot_range)

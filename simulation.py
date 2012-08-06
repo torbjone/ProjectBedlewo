@@ -25,14 +25,20 @@ def plotstuff(cell):
         ax.plot(cell.tvec,cell.synapses[i].i,color=cell.synapses[i].color)
     ax.set_xlabel('Time [ms]')
     ax.set_ylabel('Syn. i [nA]')
-    
-   
+
+    stim_array = np.sum(cell.imem, axis=0)
+    ax = fig.add_axes([0.1, 0.1, 0.5, 0.2])
+    ax.plot(cell.tvec,stim_array)
+    ax.set_xlabel('Time [ms]')
+    ax.set_ylabel('Syn. i [nA]')
     ax = fig.add_axes([0.65, 0.1, 0.25, 0.8], frameon=False)
     for i in xrange(cell.xend.size):
         ax.plot([cell.xstart[i],cell.xend[i]],[cell.zstart[i],cell.zend[i]],color='k')
     for i in xrange(len(cell.synapses)):
         ax.plot([cell.synapses[i].x],[cell.synapses[i].z],\
             color=cell.synapses[i].color,marker=cell.synapses[i].marker)
+    stimulation_idx = clampparams['idx']
+    ax.plot([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]], 'D',color='y')
     pl.axis('equal')
     pl.axis(pl.array(pl.axis())*0.8)
     ax.set_xticks([])
@@ -49,8 +55,8 @@ cellParameters = {
     'passive' : True,           # switch on passive mechs
     'nsegs_method' : 'lambda_f',# method for setting number of segments,
     'lambda_f' : 100,           # segments are isopotential at this frequency
-    'timeres_NEURON' : 2**-4,   # dt of LFP and NEURON simulation.
-    'timeres_python' : 2**-4,
+    'timeres_NEURON' : 2**-5,   # dt of LFP and NEURON simulation.
+    'timeres_python' : 2**-5,
     'tstartms' : -10,          #start time, recorders start at t=0
     'tstopms' : 100,           #stop time of simulation
     'custom_code'  : ['apical_simulation.hoc'],        # will if given list of files run this file
@@ -112,7 +118,7 @@ insert_synapses_GABA_A_args = {
 
 
 clampparams = {
-    'idx' : 0,
+    'idx' : 600,
     'record_current' : True,
     'amp' : 400e-2, #[mA]
     'dur' : 50,
@@ -130,7 +136,7 @@ simulationParameters = {
     'rec_vmem' : True,    #record membrane potential for all compartments
 }
 
-def get_cell(do_simulation = True):
+def get_cell(output_folder, do_simulation = True):
     def insert_synapses(synparams, section, n, spTimesFun, args):
         #find n compartments to insert synapses onto
         idx = cell.get_rand_idx_area_norm(section=section, nidx=n)
@@ -148,26 +154,27 @@ def get_cell(do_simulation = True):
 
     cell = LFPy.Cell(**cellParameters)
     cell.set_rotation(x = pl.pi/2)
-    cell.set_rotation(z = pl.pi/2)
+    #cell.set_rotation(z = pl.pi/2)
     if do_simulation:
-        np.save('x_start.npy', cell.xstart)
-        np.save('y_start.npy', cell.ystart)
-        np.save('z_start.npy', cell.zstart)
-        np.save('x_end.npy', cell.xend)
-        np.save('y_end.npy', cell.yend)
-        np.save('z_end.npy', cell.zend)
-        np.save('diam.npy', cell.diam)
+        np.save(output_folder + 'x_start.npy', cell.xstart)
+        np.save(output_folder + 'y_start.npy', cell.ystart)
+        np.save(output_folder + 'z_start.npy', cell.zstart)
+        np.save(output_folder + 'x_end.npy', cell.xend)
+        np.save(output_folder + 'y_end.npy', cell.yend)
+        np.save(output_folder + 'z_end.npy', cell.zend)
+        np.save(output_folder + 'diam.npy', cell.diam)
         currentClamp = LFPy.StimIntElectrode(cell, **clampparams)
         insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
         insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
         insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
         cell.simulate(**simulationParameters)
-        np.save('imem.npy', cell.imem)
-        np.save('tvec.npy', cell.tvec)
+        np.save(output_folder + 'imem.npy', cell.imem)
+        np.save(output_folder + 'tvec.npy', cell.tvec)
         plotstuff(cell)
+
     else:
-        cell.imem = np.load('imem.npy')
-        cell.tvec = np.load('tvec.npy')
+        cell.imem = np.load(output_folder + 'imem.npy')
+        cell.tvec = np.load(output_folder + 'tvec.npy')
     return cell
 
 def plot_cell_3D(cell):
@@ -240,21 +247,24 @@ def plot_cell_3D(cell):
 
     os.system('mencoder "mf://%s/anim_imem2/*.png" -mf type=png:fps=10 -ovc lavc -o output.avi'% savefolder)
 
-def simple_plot_2D(cell, start_t, stop_t):
+def simple_plot_2D(cell, plot_range):
     import matplotlib.animation as animation
     import matplotlib.pyplot as plt
     def init():
-        scat = ax.scatter(y,z, c=imem[:,0], s=10*comp_size)
-        ax2.plot(t_array, imem[0,:])
-        time_bar = ax2.plot([start_t,start_t], [0,9])
+        ax.plot([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]], 'D', color='y')
+        scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size)
+        stim_point, = ax.plot([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]], 'D', color='w')
+        time_bar, = ax2.plot([start_t,start_t], [0,9])
         time_text.set_text('')
-        return scat, time_text
-    def update_plot(i, data, scat, time_bar):
+        return scat, time_text, stim_point
+    def update_plot(i, data, scat, time_text, time_bar, stim_point):
         scat.set_array(data[:,i])
         time_text.set_text(time_template%(t_array[i]))
         time_bar.set_data([t_array[i], t_array[i]], [0,9])
-        return scat, time_text,time_bar
-   
+        stim_point.set_data([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]])
+        return scat, time_text,time_bar, stim_point
+
+    start_t, stop_t = plot_range    
     start_t_ixd = np.argmin(np.abs(cell.tvec - start_t))
     stop_t_ixd  = np.argmin(np.abs(cell.tvec - stop_t))
     t_array = cell.tvec[start_t_ixd:stop_t_ixd]
@@ -265,23 +275,38 @@ def simple_plot_2D(cell, start_t, stop_t):
     z = cell.zmid
     dt = cell.timeres_python
     comp_size = cell.diam
+    stimulation_idx = clampparams['idx']
+    pl.close('all')
     fig = plt.figure(figsize=[7,11])
-    ax = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
+    ax = fig.add_axes([0.1,0.1,0.5,0.9])
+    scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size)
+    stim_point, = ax.plot([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]], 'D', color='w')
+    ax.axis('equal')
+    #ax.axis([-200, 400, -300,1000])
+    pl.colorbar(scat)
+    ax2 = fig.add_axes([0.7,0.6,0.25,0.3])
     ax2.axis([start_t, stop_t, 0,9])
-    #ax2.plot(t_array, imem[0,:])
+    ax2.plot(t_array, imem[0,:])
     time_bar, = ax2.plot([start_t,start_t], [0,9])
     time_template = 'time = %.3fms'
     time_text = ax.text(0, max(z)*1.1, '')
-    scat = ax.scatter(y,z, c=imem[:,0], s=10*comp_size)
-    ax.axis('equal')
-    pl.colorbar(scat)
+    
     ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
-                                  fargs=(imem, scat, time_bar),blit=True, interval=.01, init_func=init)
+                                  fargs=(imem, scat, time_text, time_bar, stim_point),blit=True, interval=.01, init_func=init)
     #ani.save('simple_plot.mp4')
     #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()
 
 if __name__ == '__main__':
-    cell = get_cell(do_simulation = False)
-    simple_plot_2D(cell, 35,42)
+    output_folder = 'larkum_sim/'
+    do_simulation = True
+    plot_range = [38,100]
+    try:
+        os.mkdir(output_folder)
+    except(OSError):
+        if do_simulation:
+            print "Result folder already exists. Overwriting..."
+        else:
+            print "Loading simulation files..."
+    cell = get_cell(output_folder, do_simulation)
+    simple_plot_2D(cell, plot_range)

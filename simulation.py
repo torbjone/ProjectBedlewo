@@ -3,6 +3,7 @@ import matplotlib.pylab as pl
 import numpy as np
 import LFPy
 import os
+import sys
 #from mayavi import mlab
 import neuron
 pl.rcParams.update({'font.size' : 12,
@@ -120,9 +121,9 @@ insert_synapses_GABA_A_args = {
 
 
 clamp_1 = {
-    'idx' : 221,
+    'idx' : 228,
     'record_current' : True,
-    'amp' : 3., #[nA]
+    'amp' : 1., #[nA]
     'dur' : 500,
     'delay' :100,
     #'freq' : 10,
@@ -132,9 +133,9 @@ clamp_1 = {
 }
 
 clamp_2 = {
-    'idx' : 375,
+    'idx' : 332,
     'record_current' : True,
-    'amp' : 3., #[nA]
+    'amp' : 1., #[nA]
     'dur' : 500,
     'delay' :100,
     #'freq' : 10,
@@ -173,6 +174,7 @@ def get_cell(output_folder, do_simulation = True):
     cell.set_rotation(x = pl.pi/2)
     #cell.set_rotation(z = pl.pi/2)
     if do_simulation:
+        os.system('cp %s %s' %(sys.argv[0], output_folder))
         np.save(output_folder + 'x_start.npy', cell.xstart)
         np.save(output_folder + 'y_start.npy', cell.ystart)
         np.save(output_folder + 'z_start.npy', cell.zstart)
@@ -271,7 +273,7 @@ def simple_plot_2D(cell, plot_range):
     import matplotlib.pyplot as plt
     def init():
         ax.plot([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_2]], 'D', color='y')
-        scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size)
+        scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size, vmin=-60, vmax=20)
         stim_point, = ax.plot([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_1]], 'D', color='w')
         time_bar, = ax2.plot([start_t,start_t], [0,9])
         time_text.set_text('')
@@ -299,7 +301,7 @@ def simple_plot_2D(cell, plot_range):
     pl.close('all')
     fig = plt.figure(figsize=[7,11])
     ax = fig.add_axes([0.1,0.1,0.5,0.9])
-    scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size)
+    scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size, vmin=-60, vmax=20)
     stim_point, = ax.plot([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_1]], 'D', color='w')
     #ax.axis('equal')
     ax.axis([-100, 300, -200,1100])
@@ -333,6 +335,16 @@ def simple_plot_2D(cell, plot_range):
     #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()
 
+
+def push_simulation_to_folder(save_to_folder, data_from_folder):
+    print "Copying all simulation results from %s " %data_from_folder\
+          +"and simulation file to folder %s." % save_to_folder
+    try:
+        os.mkdir(save_to_folder)
+    except(OSError):
+        print "Result folder already exists. Overwriting..."
+    os.system('cp %s/* %s' %(data_from_folder, save_to_folder))
+
 def plot_cell_compartments(cell):
     for comp_idx in xrange(len(cell.xmid)):
         pl.plot(cell.xmid[comp_idx], cell.zmid[comp_idx], marker='$%i$'%comp_idx, color='b', markersize=10)
@@ -341,7 +353,7 @@ def plot_cell_compartments(cell):
 if __name__ == '__main__':
     output_folder = 'larkum_sim/'
     do_simulation = True
-    plot_range = [95,200]
+    plot_range = [99,111]
     try:
         os.mkdir(output_folder)
     except(OSError):
@@ -350,5 +362,7 @@ if __name__ == '__main__':
         else:
             print "Loading simulation files..."
     cell = get_cell(output_folder, do_simulation)
+    
     #plot_cell_compartments(cell)
     simple_plot_2D(cell, plot_range)
+    push_simulation_to_folder('tuft_inj_driven_AP_in_soma', output_folder)

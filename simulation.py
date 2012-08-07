@@ -351,8 +351,8 @@ def plot_cell_compartments(cell):
     pl.show()
 
 if __name__ == '__main__':
-    output_folder = 'larkum_sim/'
-    do_simulation = True
+    output_folder = 'tuft_inj_driven_AP_in_soma/'#'larkum_sim/'
+    do_simulation = False
     plot_range = [99,111]
     try:
         os.mkdir(output_folder)
@@ -365,4 +365,4 @@ if __name__ == '__main__':
     
     #plot_cell_compartments(cell)
     simple_plot_2D(cell, plot_range)
-    push_simulation_to_folder('tuft_inj_driven_AP_in_soma', output_folder)
+    #push_simulation_to_folder('tuft_inj_driven_AP_in_soma', output_folder)

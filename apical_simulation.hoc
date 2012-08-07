@@ -1,4 +1,4 @@
-load_file("070603c2.cll")//the layer 5 cell
+//load_file("070603c2.cll")//the layer 5 cell
 
 axon.L=10
 axon.diam=5

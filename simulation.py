@@ -3,6 +3,7 @@ import matplotlib.pylab as pl
 import numpy as np
 import LFPy
 import os
+import sys
 #from mayavi import mlab
 import neuron
 pl.rcParams.update({'font.size' : 12,
@@ -10,7 +11,7 @@ pl.rcParams.update({'font.size' : 12,
     'wspace' : 0.5, 'hspace' : 0.5})
 
 #seed for random generation
-pl.seed(99)
+pl.seed(0)
 
 def plotstuff(cell):
     fig = pl.figure(figsize=[12, 8])
@@ -37,8 +38,10 @@ def plotstuff(cell):
     for i in xrange(len(cell.synapses)):
         ax.plot([cell.synapses[i].x],[cell.synapses[i].z],\
             color=cell.synapses[i].color,marker=cell.synapses[i].marker)
-    stimulation_idx = clampparams['idx']
-    ax.plot([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]], 'D',color='y')
+    stim_idx_1 = clamp_1['idx']
+    stim_idx_2= clamp_2['idx']
+    ax.plot([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_1]], 'D',color='y')
+    ax.plot([cell.xmid[stim_idx_2]], [cell.zmid[stim_idx_2]], 'D',color='g')
     pl.axis('equal')
     pl.axis(pl.array(pl.axis())*0.8)
     ax.set_xticks([])
@@ -57,8 +60,8 @@ cellParameters = {
     'lambda_f' : 100,           # segments are isopotential at this frequency
     'timeres_NEURON' : 2**-5,   # dt of LFP and NEURON simulation.
     'timeres_python' : 2**-5,
-    'tstartms' : -10,          #start time, recorders start at t=0
-    'tstopms' : 105,           #stop time of simulation
+    'tstartms' : -100,          #start time, recorders start at t=0
+    'tstopms' : 1000,           #stop time of simulation
     'custom_code'  : ['apical_simulation.hoc'],        # will if given list of files run this file
 }
 
@@ -117,17 +120,32 @@ insert_synapses_GABA_A_args = {
 }
 
 
-clampparams = {
-    'idx' : 250,
+clamp_1 = {
+    'idx' : 228,
     'record_current' : True,
-    'amp' : 0.0, #[nA]
+    'amp' : 1., #[nA]
     'dur' : 500,
-    'delay' :4,
+    'delay' :100,
     #'freq' : 10,
     #'phase' : 0,
     #'pkamp' : 300e-3,
     'pptype' : 'IClamp',
 }
+
+clamp_2 = {
+    'idx' : 332,
+    'record_current' : True,
+    'amp' : 1., #[nA]
+    'dur' : 500,
+    'delay' :100,
+    #'freq' : 10,
+    #'phase' : 0,
+    #'pkamp' : 300e-3,
+    'pptype' : 'IClamp',
+}
+
+
+
 
 # Parameters for the cell.simulate() call, recording membrane- and syn.-currents
 simulationParameters = {
@@ -156,6 +174,7 @@ def get_cell(output_folder, do_simulation = True):
     cell.set_rotation(x = pl.pi/2)
     #cell.set_rotation(z = pl.pi/2)
     if do_simulation:
+        os.system('cp %s %s' %(sys.argv[0], output_folder))
         np.save(output_folder + 'x_start.npy', cell.xstart)
         np.save(output_folder + 'y_start.npy', cell.ystart)
         np.save(output_folder + 'z_start.npy', cell.zstart)
@@ -163,16 +182,16 @@ def get_cell(output_folder, do_simulation = True):
         np.save(output_folder + 'y_end.npy', cell.yend)
         np.save(output_folder + 'z_end.npy', cell.zend)
         np.save(output_folder + 'diam.npy', cell.diam)
-        currentClamp = LFPy.StimIntElectrode(cell, **clampparams)
-        insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
-        insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
-        insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
+        currentClamp_1 = LFPy.StimIntElectrode(cell, **clamp_1)
+        currentClamp_2 = LFPy.StimIntElectrode(cell, **clamp_2)
+        #insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
+        #insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
+        #insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
         cell.simulate(**simulationParameters)
         np.save(output_folder + 'imem.npy', cell.imem)
         np.save(output_folder + 'vmem.npy', cell.vmem)
         np.save(output_folder + 'tvec.npy', cell.tvec)
         plotstuff(cell)
-
     else:
         cell.vmem = np.load(output_folder + 'vmem.npy')
         cell.imem = np.load(output_folder + 'imem.npy')
@@ -253,17 +272,17 @@ def simple_plot_2D(cell, plot_range):
     import matplotlib.animation as animation
     import matplotlib.pyplot as plt
     def init():
-        ax.plot([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]], 'D', color='y')
-        scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size)
-        stim_point, = ax.plot([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]], 'D', color='w')
+        ax.plot([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_2]], 'D', color='y')
+        scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size, vmin=-60, vmax=20)
+        stim_point, = ax.plot([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_1]], 'D', color='w')
         time_bar, = ax2.plot([start_t,start_t], [0,9])
         time_text.set_text('')
         return scat, time_text, stim_point
     def update_plot(i, data, scat, time_text, time_bar, stim_point):
         scat.set_array(data[:,i])
         time_text.set_text(time_template%(t_array[i]))
-        time_bar.set_data([t_array[i], t_array[i]], [0,9])
-        stim_point.set_data([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]])
+        time_bar.set_data([t_array[i], t_array[i]], [-1000,1000])
+        stim_point.set_data([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_1]])
         return scat, time_text,time_bar, stim_point
     start_t, stop_t = plot_range    
     start_t_ixd = np.argmin(np.abs(cell.tvec - start_t))
@@ -276,37 +295,67 @@ def simple_plot_2D(cell, plot_range):
     z = cell.zmid
     dt = cell.timeres_python
     comp_size = cell.diam
-    stimulation_idx = clampparams['idx']
+    stim_idx_1 = clamp_1['idx']
+    stim_idx_2 = clamp_2['idx']
+    
     pl.close('all')
     fig = plt.figure(figsize=[7,11])
     ax = fig.add_axes([0.1,0.1,0.5,0.9])
-    scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size)
-    stim_point, = ax.plot([cell.xmid[stimulation_idx]], [cell.zmid[stimulation_idx]], 'D', color='w')
-    ax.axis('equal')
-    #ax.axis([-200, 400, -300,1000])
+    scat = ax.scatter(x,z, c=imem[:,0], s=10*comp_size, vmin=-60, vmax=20)
+    stim_point, = ax.plot([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_1]], 'D', color='w')
+    #ax.axis('equal')
+    ax.axis([-100, 300, -200,1100])
     pl.colorbar(scat)
-    ax2 = fig.add_axes([0.7,0.6,0.25,0.3])
+
+    # Soma current
+    ax2 = fig.add_axes([0.7,0.8,0.25,0.15])
+    ax2.set_title('vmem at soma')
     ax2.axis([start_t, stop_t, np.min(imem[0,:]), np.max(imem[0,:])])
+    stim_point, = ax.plot([cell.xmid[stim_idx_1]], [cell.zmid[stim_idx_1]], 'D', color='w')
+
     ax2.plot(t_array, imem[0,:])
     time_bar, = ax2.plot([start_t,start_t], [0,9])
     time_template = 'time = %.3fms'
     time_text = ax.text(0, max(z)*1.1, '')
+
+    # Stimulation point-1 current
+    ax3 = fig.add_axes([0.7,0.6,0.25,0.15])
+    ax3.set_title('vmem at inj. point 1')
+    ax3.axis([start_t, stop_t, np.min(imem[stim_idx_1,:]), np.max(imem[stim_idx_1,:])])
+    ax3.plot(t_array, imem[stim_idx_1,:])
+
+    # Stimulation point-2 current
+    ax4 = fig.add_axes([0.7,0.4,0.25,0.15])
+    ax4.set_title('vmem at inj. point 2')
+    ax4.axis([start_t, stop_t, np.min(imem[stim_idx_2,:]), np.max(imem[stim_idx_2,:])])
+    ax4.plot(t_array, imem[stim_idx_2,:])
+
     ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
                                   fargs=(imem, scat, time_text, time_bar, stim_point), blit=True, interval=.1, init_func=init)
     #ani.save('simple_plot.mp4')
     #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()
 
+
+def push_simulation_to_folder(save_to_folder, data_from_folder):
+    print "Copying all simulation results from %s " %data_from_folder\
+          +"and simulation file to folder %s." % save_to_folder
+    try:
+        os.mkdir(save_to_folder)
+    except(OSError):
+        print "Result folder already exists. Overwriting..."
+    os.system('cp %s/* %s' %(data_from_folder, save_to_folder))
+
 def plot_cell_compartments(cell):
-    
     for comp_idx in xrange(len(cell.xmid)):
         pl.plot(cell.xmid[comp_idx], cell.zmid[comp_idx], marker='$%i$'%comp_idx, color='b', markersize=10)
     pl.show()
 
 if __name__ == '__main__':
-    output_folder = 'larkum_sim/'
-    do_simulation = True
-    plot_range = [94,99]
+
+    output_folder = 'tuft_inj_driven_AP_in_soma/'#'larkum_sim/'
+    do_simulation = False
+    plot_range = [99,111]
     try:
         os.mkdir(output_folder)
     except(OSError):
@@ -315,5 +364,7 @@ if __name__ == '__main__':
         else:
             print "Loading simulation files..."
     cell = get_cell(output_folder, do_simulation)
+    
     #plot_cell_compartments(cell)
     simple_plot_2D(cell, plot_range)
+    #push_simulation_to_folder('tuft_inj_driven_AP_in_soma', output_folder)

@@ -61,7 +61,7 @@ cellParameters = {
     'timeres_NEURON' : 2**-5,   # dt of LFP and NEURON simulation.
     'timeres_python' : 2**-5,
     'tstartms' : -100,          #start time, recorders start at t=0
-    'tstopms' : 1000,           #stop time of simulation
+    'tstopms' : 100,           #stop time of simulation
     'custom_code'  : ['apical_simulation.hoc'],        # will if given list of files run this file
 }
 
@@ -108,7 +108,7 @@ insert_synapses_AMPA_args = {
 }
 insert_synapses_NMDA_args = {
     'section' : 'alldend',
-    'n' : 10,
+    'n' : 2,
     'spTimesFun' : LFPy.inputgenerators.stationary_gamma,
     'args' : [cellParameters['tstartms'], cellParameters['tstopms'], 5, 20]
 }
@@ -119,33 +119,28 @@ insert_synapses_GABA_A_args = {
     'args' : [cellParameters['tstartms'], cellParameters['tstopms'], 2, 10]
 }
 
-
 clamp_1 = {
     'idx' : 228,
     'record_current' : True,
-    'amp' : 1., #[nA]
-    'dur' : 500,
-    'delay' :100,
+    'amp' : 0.0, #[nA]
+    'dur' : 0,
+    'delay' :10000,
     #'freq' : 10,
     #'phase' : 0,
     #'pkamp' : 300e-3,
     'pptype' : 'IClamp',
 }
-
 clamp_2 = {
     'idx' : 332,
     'record_current' : True,
-    'amp' : 1., #[nA]
-    'dur' : 500,
-    'delay' :100,
+    'amp' : 0.0, #[nA]
+    'dur' : 000,
+    'delay' :10000,
     #'freq' : 10,
     #'phase' : 0,
     #'pkamp' : 300e-3,
     'pptype' : 'IClamp',
 }
-
-
-
 
 # Parameters for the cell.simulate() call, recording membrane- and syn.-currents
 simulationParameters = {
@@ -157,19 +152,19 @@ simulationParameters = {
 def get_cell(output_folder, do_simulation = True):
     def insert_synapses(synparams, section, n, spTimesFun, args):
         #find n compartments to insert synapses onto
-        idx = cell.get_rand_idx_area_norm(section=section, nidx=n)
+        idx = [228,332]#cell.get_rand_idx_area_norm(section=section, nidx=n)
 
         #Insert synapses in an iterative fashion
         for i in idx:
             synparams.update({'idx' : int(i)})
-
             # Some input spike train using the function call
             spiketimes = spTimesFun(args[0], args[1], args[2], args[3])
-
+            #print spiketimes.shape
             # Create synapse(s) and setting times using the Synapse class in LFPy
             s = LFPy.Synapse(cell,**synparams)
+            #s.set_spike_times(spiketimes)
+            spiketimes = pl.array([[14], [14]])
             s.set_spike_times(spiketimes)
-
     cell = LFPy.Cell(**cellParameters)
     cell.set_rotation(x = pl.pi/2)
     #cell.set_rotation(z = pl.pi/2)
@@ -182,10 +177,10 @@ def get_cell(output_folder, do_simulation = True):
         np.save(output_folder + 'y_end.npy', cell.yend)
         np.save(output_folder + 'z_end.npy', cell.zend)
         np.save(output_folder + 'diam.npy', cell.diam)
-        currentClamp_1 = LFPy.StimIntElectrode(cell, **clamp_1)
-        currentClamp_2 = LFPy.StimIntElectrode(cell, **clamp_2)
+        #currentClamp_1 = LFPy.StimIntElectrode(cell, **clamp_1)
+        #currentClamp_2 = LFPy.StimIntElectrode(cell, **clamp_2)
         #insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
-        #insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
+        insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
         #insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
         cell.simulate(**simulationParameters)
         np.save(output_folder + 'imem.npy', cell.imem)
@@ -351,9 +346,9 @@ def plot_cell_compartments(cell):
     pl.show()
 
 if __name__ == '__main__':
-    output_folder = 'tuft_inj_driven_AP_in_soma/'#'larkum_sim/'
+    output_folder = 'synaptic_stimuli/'#'larkum_sim/'
     do_simulation = False
-    plot_range = [99,111]
+    plot_range = [12,60]
     try:
         os.mkdir(output_folder)
     except(OSError):
@@ -364,5 +359,5 @@ if __name__ == '__main__':
     cell = get_cell(output_folder, do_simulation)
     
     #plot_cell_compartments(cell)
-    simple_plot_2D(cell, plot_range)
-    #push_simulation_to_folder('tuft_inj_driven_AP_in_soma', output_folder)
+    #simple_plot_2D(cell, plot_range)
+    push_simulation_to_folder('two_syn_AP_in_soma_long_delay', output_folder)

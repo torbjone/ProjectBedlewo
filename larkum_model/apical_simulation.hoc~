@@ -1,4 +1,4 @@
-load_file("070603c2.cll")//the layer 5 cell
+//load_file("070603c2.cll")//the layer 5 cell
 
 axon.L=10
 axon.diam=5
@@ -6,7 +6,7 @@ create axon1
 connect axon1(0),axon(1)
 axon1.L=200
 axon1.diam=1
-objref basal,apical,trunk,hotzone
+objref basal,apical,trunk,hotzone // Funny ??
 objref tuft,tuftE,tuftS,temp,tuft1[6]
 objref secv,sref
 basal = new SectionList()
@@ -21,10 +21,8 @@ temp = new SectionList()
 
 
 
-apic[45].L=1
-
+apic[45].L=1 // This is funny? 
 apic[30].L=1
-
 apic[74].L=1
 
 
@@ -370,7 +368,7 @@ access soma
 all.remove()
 
 
-print "START OF SIMULATION"
+//print "START OF SIMULATION"
 //**********random synapses//
 numinputs=1
 numS=100

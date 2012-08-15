@@ -1,4 +1,4 @@
-//load_file("070603c2.cll")//the layer 5 cell
+load_file("070603c2_copy.hoc")//the layer 5 cell
 
 axon.L=10
 axon.diam=5
@@ -19,12 +19,9 @@ tuftE = new SectionList()
 tuftS = new SectionList()
 temp = new SectionList()
 
-
-
 apic[45].L=1 // This is funny? 
 apic[30].L=1
 apic[74].L=1
-
 
 access apic[1]
 apical.subtree()
@@ -34,7 +31,6 @@ apical.append()
 access apic[10]
 tuft.subtree()
 for i = 0, 11 apic[i] trunk.append()
-
 
 for i = 0, 69 dend[i] basal.append()
 
@@ -400,7 +396,9 @@ rseg= new Random()
 rdel= new Random()
 objref stfunc,shape
 stfunc=new StringFunctions()
-/*
+
+
+
 shape=new Shape(0)
 shape.view(-200, -200, 400, 2000, 900, 200, 400.48, 600.32) 
 shape.show(0)
@@ -504,7 +502,7 @@ xpanel("Soma&Trunk")
   xvalue("kdr","trunk_kdr",1,"ca_hot_zone()")
 xpanel()
 
-*/
+
 
 
 proc c_gmax(){
@@ -659,10 +657,10 @@ proc loclocation(){
 	make_shape_plot()
 }//LOCAL SYNAPSES
 
-//loclocation()
-//c_gmax()
+loclocation()
+c_gmax()
 //load_file("apic.ses")//the cell
-//access soma
+access soma
 
 vshift_sca=-10
 forsec apical vshift_hh3=-10

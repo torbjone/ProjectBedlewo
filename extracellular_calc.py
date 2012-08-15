@@ -4,7 +4,8 @@ from larkum_sim import get_cell
 import numpy as np
 from sys import stdout
 import os
-from plot_mea import plot_interval_on_all_elecs, plot_neuron_from_side
+from plot_mea import plot_interval_on_all_elecs, plot_neuron_from_side,\
+     animate_MEA
 
 def make_mapping(Cell, Mea, set_up_parameters, output_folder, do_calculation):
     if do_calculation:
@@ -103,5 +104,6 @@ if __name__ == '__main__':
     Moi = MoI.MoI(set_up_parameters, True)
     mapping = make_mapping(cell, Mea, set_up_parameters, output_folder, False)    
     signal = find_signal_at_electrodes(cell, Mea, mapping, output_folder, False)
-    plot_interval_on_all_elecs(cell, signal, [0,10], Mea)
-    plot_neuron_from_side(cell, Mea, set_up_parameters)
+    #plot_interval_on_all_elecs(cell, signal, [0,10], Mea)
+    #plot_neuron_from_side(cell, Mea, set_up_parameters)
+    animate_MEA(signal, cell, Mea, [0,10])

@@ -91,3 +91,94 @@ def plot_neuron_from_side(cell, Mea, set_up_parameters):
                 color='k', lw=cell.diam[comp])
     #pl.savefig('morph_from_side.png')
     pl.show()
+    
+def animate_MEA(signal, cell, Mea, plot_range):
+    pl.close('all')
+    import matplotlib.animation as animation
+    import matplotlib.pyplot as plt
+    # Below are two function used in the animation. 
+    def init():
+        #scat = ax.scatter(x,z, c=ica[:,0], s=10*comp_size, vmin=-1, vmax=1)
+        stim_point, = ax.plot([cell.zmid[stim_idx_1]], [cell.ymid[stim_idx_1]], \
+                              'D', color='w', markersize=15)
+        stim_point2, = ax.plot([cell.zmid[stim_idx_2]], [cell.ymid[stim_idx_2]], 'D', color='y', markersize=15)
+        stim_point3, = ax.plot([cell.zmid[syn_numb]], [cell.ymid[syn_numb]], 'D', color='g', markersize=15)
+        time_bar, = ax2.plot([start_t,start_t], [0,9])
+        time_text.set_text('')
+        return scat, time_text, stim_point
+    def update_plot(i, data, scat, time_text, time_bar):
+        scat.set_array(data[:,i])
+        time_text.set_text(time_template%(t_array[i]))
+        time_bar.set_data([t_array[i], t_array[i]], [-1000,1000])
+        stim_point.set_data([cell.zmid[stim_idx_1]], [cell.ymid[stim_idx_1]])
+        return scat, time_text,time_bar#, stim_point
+    n_compartments = len(cell.imem[:,0])
+    stim_idx_1 = 350
+    stim_idx_2 = 171
+    syn_numb = 423
+    # Picking out the desired time range.
+    start_t, stop_t = plot_range    
+    start_t_ixd = np.argmin(np.abs(cell.tvec - start_t))
+    stop_t_ixd  = np.argmin(np.abs(cell.tvec - stop_t))
+    t_array = cell.tvec[start_t_ixd:stop_t_ixd]
+    vmem = cell.vmem[:,start_t_ixd:stop_t_ixd]
+    imem = cell.imem[:,start_t_ixd:stop_t_ixd]
+    signal = signal[:,start_t_ixd:stop_t_ixd]
+    n_tsteps = len(vmem[0,:])
+    y = Mea.elec_y
+    z = Mea.elec_z
+
+    dt = cell.timeres_python
+    # Index of the compartment recieving synaptic input or stimulation
+
+    fig = plt.figure(figsize=[7,11])
+    # Initiate cell plot with membrane voltage
+    ax = fig.add_axes([0.1,0.1,0.5,0.9])
+    neur_x = np.array([cell.xstart/1000, cell.xmid/1000, cell.xend/1000])
+    neur_y = np.array([cell.ystart/1000, cell.ymid/1000, cell.yend/1000])
+    neur_z = np.array([cell.zstart/1000, cell.zmid/1000, cell.zend/1000])
+    for comp in xrange(n_compartments):
+        pl.plot((neur_z[0,comp], neur_z[2,comp]), \
+                (neur_y[0,comp],neur_y[2,comp]), color='k', lw=cell.diam[comp])
+    #scat = ax.scatter(x,z, c=ica[:,0], s=10*comp_size, vmin=-0.01, vmax=0.01)
+    scat = ax.scatter(z,y, c=signal[:,0], s=400, vmin=-0.5, vmax=0.5)
+    stim_point, = ax.plot([cell.zmid[stim_idx_1]], [cell.ymid[stim_idx_1]], 'D', color='w')
+    #ax.axis('equal')
+    ax.axis([-0.1, .100, -.100,.400])
+    pl.colorbar(scat)
+
+    # Plot of soma membrane current
+    ax2 = fig.add_axes([0.7,0.8,0.25,0.15])
+    ax2.set_title('imem at soma')
+    ax2.axis([start_t, stop_t, np.min(imem[0,:]), np.max(imem[0,:])])
+    ax2.plot(t_array, imem[0,:])
+    time_bar, = ax2.plot([start_t,start_t], [0,9])
+    time_template = 'time = %.3fms'
+    time_text = ax.text(0, max(z)*1.1, '')
+
+    # Stimulation point-1 current
+    ax3 = fig.add_axes([0.7,0.6,0.25,0.15])
+    ax3.set_title('imem at inj. point 1 (wh)')
+    ax3.axis([start_t, stop_t, np.min(imem[stim_idx_1,:]), np.max(imem[stim_idx_1,:])])
+    ax3.plot(t_array, imem[stim_idx_1,:])
+
+    # Stimulation point-2 current
+    ax4 = fig.add_axes([0.7,0.4,0.25,0.15])
+    ax4.set_title('imem at inj. point 2 (ye)')
+    ax4.axis([start_t, stop_t, np.min(imem[stim_idx_2,:]), np.max(imem[stim_idx_2,:])])
+    ax4.plot(t_array, imem[stim_idx_2,:])
+
+    # Chosen synaps membrane current
+    
+    ax4 = fig.add_axes([0.7,0.2,0.25,0.15])
+    ax4.set_title('vmem at point %d (gr)' %syn_numb)
+    ax.plot([cell.xmid[syn_numb]], [cell.zmid[syn_numb]], 'D', color='g')
+    ax4.axis([start_t, stop_t, np.min(vmem[syn_numb,:]), np.max(vmem[syn_numb,:])])
+    ax4.plot(t_array, imem[syn_numb,:])
+
+    ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
+                                  fargs=(signal, scat, time_text, time_bar), \
+                                  blit=True, interval=200, init_func=init)
+    #ani.save('simple_plot.mp4')
+    #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
+    pl.show()

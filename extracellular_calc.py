@@ -25,7 +25,7 @@ def make_mapping(Cell, Mea, set_up_parameters, output_folder, do_calculation):
         elec_y = Mea.elec_y
         elec_z = Mea.elec_z
         for comp in xrange(n_compartments):
-            percentage = ((comp+1)*100/n_compartments)
+            percentage = (comp+1)*100/n_compartments
             stdout.write("\r%d %% complete" % percentage)
             stdout.flush()
             for elec in xrange(n_elecs):

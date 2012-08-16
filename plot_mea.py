@@ -33,7 +33,8 @@ def plot_interval_on_all_elecs(cell, signal_at_elec, t_interval, Mea):
         #        np.ones(len(spike_at_t)) * Mea.elec_y[elec], 'o', color='r')
     #ax.axis([-0.1, 0.1, -0.1, 0.1])           
     #ax.axis([1.1*np.min(Mea.elec_z),1.1*np.max(Mea.elec_z) , 1.1*np.min(Mea.elec_y),1.1*np.max(Mea.elec_y) ])
-    ax.axis([-.15,0.25, -0.2,0.3 ])
+    ax.axis('equal')
+    ax.axis([-.15,0.25, -0.2,1.3 ])
     ax.plot([0.075, 0.075  + electrode_separation/2], [-0.099, -0.099], color='k', lw = 3)
     ax.text(0.075, -0.105, '%g ms' % int(t_stop-t_start))
     
@@ -65,6 +66,32 @@ def plot_interval_on_all_elecs(cell, signal_at_elec, t_interval, Mea):
     #pl.savefig('morph_n_currents.png')
     pl.show()
 
+def plot_electrodes_and_neuron(cell,  Mea):
+    pl.close('all')
+    n_compartments = len(cell.xstart)
+    fig = pl.figure(figsize=[10, 10])
+    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], frameon=False)
+    # Plot the electrodes
+    ax.scatter(Mea.elec_z, Mea.elec_y, color='b')
+    # Plot the neuron
+    x = np.array([cell.xstart/1000, cell.xmid/1000, cell.xend/1000])
+    y = np.array([cell.ystart/1000, cell.ymid/1000, cell.yend/1000])
+    z = np.array([cell.zstart/1000, cell.zmid/1000, cell.zend/1000])
+    for comp in xrange(n_compartments):
+        pl.plot((z[0,comp], z[2,comp]), (y[0,comp],y[2,comp]), color='k',\
+                lw=cell.diam[comp])
+    ax.axis('equal')
+    ax.axis([-.15,0.25, -0.2,1.3 ])
+    ax.plot([40, 50], [-60, -60], color='k', lw = 3)
+    ax.text(42, -65, '10 $\mu$m')
+    pl.xlabel('z [mm]')
+    pl.ylabel('y [mm]')
+ 
+    pl.show()
+
+
+
+
 def plot_neuron_from_side(cell, Mea, set_up_parameters):
     pl.figure(figsize=(8, 5))
     pl.subplot(121)
@@ -82,7 +109,7 @@ def plot_neuron_from_side(cell, Mea, set_up_parameters):
     l = pl.axvline(linewidth=1, color='r', x=elec_plane)
     l = pl.axvline(linewidth=1, color='b', x=tissue_plane)
     pl.subplot(122)
-    pl.axis([-0.2,0.2, -0.2, 0.6])
+    pl.axis([-0.2,0.2, -0.2, 1.1])
     pl.scatter(Mea.elec_z, Mea.elec_y, color='b')
     
     for comp in xrange(n_compartments):
@@ -113,18 +140,19 @@ def animate_MEA(signal, cell, Mea, plot_range):
         stim_point.set_data([cell.zmid[stim_idx_1]], [cell.ymid[stim_idx_1]])
         return scat, time_text,time_bar#, stim_point
     n_compartments = len(cell.imem[:,0])
-    stim_idx_1 = 350
-    stim_idx_2 = 171
-    syn_numb = 423
+    stim_idx_1 = 0
+    stim_idx_2 = 0
+    syn_numb = 0
     # Picking out the desired time range.
     start_t, stop_t = plot_range    
     start_t_ixd = np.argmin(np.abs(cell.tvec - start_t))
     stop_t_ixd  = np.argmin(np.abs(cell.tvec - stop_t))
     t_array = cell.tvec[start_t_ixd:stop_t_ixd]
-    vmem = cell.vmem[:,start_t_ixd:stop_t_ixd]
+    #vmem = cell.vmem[:,start_t_ixd:stop_t_ixd]
     imem = cell.imem[:,start_t_ixd:stop_t_ixd]
     signal = signal[:,start_t_ixd:stop_t_ixd]
-    n_tsteps = len(vmem[0,:])
+    
+    n_tsteps = len(imem[0,:])
     y = Mea.elec_y
     z = Mea.elec_z
 
@@ -133,18 +161,22 @@ def animate_MEA(signal, cell, Mea, plot_range):
 
     fig = plt.figure(figsize=[7,11])
     # Initiate cell plot with membrane voltage
-    ax = fig.add_axes([0.1,0.1,0.5,0.9])
-    neur_x = np.array([cell.xstart/1000, cell.xmid/1000, cell.xend/1000])
-    neur_y = np.array([cell.ystart/1000, cell.ymid/1000, cell.yend/1000])
-    neur_z = np.array([cell.zstart/1000, cell.zmid/1000, cell.zend/1000])
-    for comp in xrange(n_compartments):
-        pl.plot((neur_z[0,comp], neur_z[2,comp]), \
-                (neur_y[0,comp],neur_y[2,comp]), color='k', lw=cell.diam[comp])
+    ax = fig.add_axes([0.1,0.05,0.5,0.85])
+    try:
+        neur_x = np.array([cell.xstart/1000, cell.xmid/1000, cell.xend/1000])
+        neur_y = np.array([cell.ystart/1000, cell.ymid/1000, cell.yend/1000])
+        neur_z = np.array([cell.zstart/1000, cell.zmid/1000, cell.zend/1000])
+        for comp in xrange(n_compartments):
+            pl.plot((neur_z[0,comp], neur_z[2,comp]), \
+                    (neur_y[0,comp],neur_y[2,comp]), color='k', lw=cell.diam[comp])
+    except:
+        for comp in xrange(n_compartments):
+            pl.plot(cell.zmid, cell.ymid, 'o')
     #scat = ax.scatter(x,z, c=ica[:,0], s=10*comp_size, vmin=-0.01, vmax=0.01)
-    scat = ax.scatter(z,y, c=signal[:,0], s=400, vmin=-0.5, vmax=0.5)
+    scat = ax.scatter(z,y, c=signal[:,0], s=500, vmin = np.min(signal), vmax = np.max(signal), marker = 'D')
     stim_point, = ax.plot([cell.zmid[stim_idx_1]], [cell.ymid[stim_idx_1]], 'D', color='w')
-    #ax.axis('equal')
-    ax.axis([-0.1, .100, -.100,.400])
+    ax.axis('equal')
+    ax.axis([-0.05, .1, .500,1.0])
     pl.colorbar(scat)
 
     # Plot of soma membrane current
@@ -169,16 +201,15 @@ def animate_MEA(signal, cell, Mea, plot_range):
     ax4.plot(t_array, imem[stim_idx_2,:])
 
     # Chosen synaps membrane current
-    
     ax4 = fig.add_axes([0.7,0.2,0.25,0.15])
-    ax4.set_title('vmem at point %d (gr)' %syn_numb)
+    ax4.set_title('mem at point %d (gr)' %syn_numb)
     ax.plot([cell.xmid[syn_numb]], [cell.zmid[syn_numb]], 'D', color='g')
-    ax4.axis([start_t, stop_t, np.min(vmem[syn_numb,:]), np.max(vmem[syn_numb,:])])
+    ax4.axis([start_t, stop_t, np.min(imem[syn_numb,:]), np.max(imem[syn_numb,:])])
     ax4.plot(t_array, imem[syn_numb,:])
 
     ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
                                   fargs=(signal, scat, time_text, time_bar), \
-                                  blit=True, interval=200, init_func=init)
+                                  blit=True, interval=50, init_func=init)
     #ani.save('simple_plot.mp4')
     #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()

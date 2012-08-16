@@ -1,20 +1,21 @@
 import MoI
 import MEA
-from larkum_sim import get_cell
+
 import numpy as np
 from sys import stdout
 import os
 from plot_mea import plot_interval_on_all_elecs, plot_neuron_from_side,\
-     animate_MEA
+     animate_MEA, plot_electrodes_and_neuron
+from tools import analyze_neuron
 
-def make_mapping(Cell, Mea, set_up_parameters, output_folder, do_calculation):
+def make_mapping(cell, Mea, set_up_parameters, output_folder, do_calculation):
     if do_calculation:
         print '\033[1;35mMakeing mapping ...\033[1;m'
         t = set_up_parameters['slice_thickness']
         sigma_1 = set_up_parameters['sigma_1']
         sigma_2 = set_up_parameters['sigma_2']
         sigma_3 = set_up_parameters['sigma_3']
-        comp_coors = np.array([Cell.xmid, Cell.ymid, Cell.zmid])
+        comp_coors = np.array([cell.xmid/1000, cell.ymid/1000, cell.zmid/1000])
         currents =  cell.imem
         n_compartments = len(currents[:,0])
         n_elecs = Mea.n_elecs
@@ -28,10 +29,15 @@ def make_mapping(Cell, Mea, set_up_parameters, output_folder, do_calculation):
             percentage = (comp+1)*100/n_compartments
             stdout.write("\r%d %% complete" % percentage)
             stdout.flush()
+            #if (cell.ymid[comp] < 800) or cell.zmid[comp] > 0.00:
+            #        continue
             for elec in xrange(n_elecs):
                 elec_pos = [elec_x, elec_y[elec], elec_z[elec]]
+                #charge_x = comp_coors[0,comp]
                 charge_pos = comp_coors[:,comp]
-                mapping[elec, comp] =Moi.anisotropic_moi(\
+                #print elec_pos
+                #print charge_pos
+                mapping[elec, comp] += Moi.anisotropic_moi(\
                     charge_pos, elec_pos)
         print ''
         np.save(output_folder + 'mapping.npy', mapping)
@@ -57,18 +63,18 @@ def find_signal_at_electrodes(cell, Mea, mapping, output_folder, do_calculation)
 def make_test_cell():
     class Cell:
         def __init__(self):
-            self.imem = np.array([[0,-1,1,0]])
-            self.xmid = np.array([0])
-            self.ymid = np.array([0])
-            self.zmid = np.array([0])
+            self.imem = np.array([[0,-1,1,0], [0,-1,1,0]])
+            self.xmid = np.array([0, -50.])
+            self.ymid = np.array([0, 700.])
+            self.zmid = np.array([0, 100.])
             self.tvec = np.arange(len(self.imem[0,:]))
+            self.timeres_python = 0.1
     cell = Cell()
     return cell
 
 def make_test_mea():
     class MEA:
         def __init__(self):
-            
             self.electrode_pitch = 0.017
             self.electrode_separation = self.electrode_pitch*2 #0.2/100
             self.n_elec_rows = 16
@@ -96,14 +102,20 @@ set_up_parameters = {
     }
 
 if __name__ == '__main__':
+    neuron_folder = 'larkum_tuft_spike/'
     output_folder = 'extracellular_test/'
-    Mea = MEA.HD_MEA_CMOS128()
-    #Mea = make_test_mea()    
-    cell = get_cell(output_folder, False)
+    elec_x = -set_up_parameters['slice_thickness']/2
+    Mea = MEA.HD_MEA_CMOS128(elec_x)
+    #Mea = make_test_mea()
+    from larkum_sim import get_cell
+    cell = get_cell(neuron_folder, False)
     #cell = make_test_cell()
     Moi = MoI.MoI(set_up_parameters, True)
-    mapping = make_mapping(cell, Mea, set_up_parameters, output_folder, False)    
+    #plot_electrodes_and_neuron(cell, Mea)
+    mapping = make_mapping(cell, Mea, set_up_parameters, output_folder, False)
     signal = find_signal_at_electrodes(cell, Mea, mapping, output_folder, False)
-    #plot_interval_on_all_elecs(cell, signal, [0,10], Mea)
+    #print mapping
+    #plot_interval_on_all_elecs(cell, signal, [20,30], Mea)
     #plot_neuron_from_side(cell, Mea, set_up_parameters)
-    animate_MEA(signal, cell, Mea, [0,10])
+    animate_MEA(signal, cell, Mea, [5,10])
+    #analyze_neuron(cell, mapping, Mea, signal_range = [5,10])

@@ -6,24 +6,24 @@ import sys
 import neuron
 from plotting import plotstuff, simple_plot_2D,\
      plot_cell_compartments
-from simulation import push_simulation_to_folder
+from tools import push_simulation_to_folder, analyze_neuron
 sim_folder = 'hay_model/'
 LFPy.cell.neuron.load_mechanisms(sim_folder + '/mod')
 
 cellParameters = {
     'morphology' : sim_folder+'lfpy_version/morphologies/cell1.hoc',
-    #'rm' : 30000,               # membrane resistance
+    'rm' : 30000,               # membrane resistance
     'cm' : 1.0,                 # membrane capacitance
     'Ra' : 100,                 # axial resistance
     'v_init' : -80,             # initial crossmembrane potential
     'e_pas' : -90,              # reversal potential passive mechs
-    #'passive' : True,           # switch on passive mechs
-    #'nsegs_method' : 'lambda_f',# method for setting number of segments,
-    #'lambda_f' : 100,           # segments are isopotential at this frequency
+    'passive' : True,           # switch on passive mechs
+    'nsegs_method' : 'lambda_f',# method for setting number of segments,
+    'lambda_f' : 100,           # segments are isopotential at this frequency
     'timeres_NEURON' : 2**-4,   # dt of LFP and NEURON simulation.
     'timeres_python' : 2**-4,
-    'tstartms' : -100,          #start time, recorders start at t=0
-    'tstopms' : 500,           #stop time of simulation
+    'tstartms' : -50,          #start time, recorders start at t=0
+    'tstopms' : 100,           #stop time of simulation
     'custom_code'  : [sim_folder+'lfpy_version/custom_codes.hoc', \
                       sim_folder+'lfpy_version/biophys3.hoc'],
     # will if given list of files run this file
@@ -72,7 +72,7 @@ insert_synapses_AMPA_args = {
 }
 insert_synapses_NMDA_args = {
     'section' : 'alldend',
-    'n' : 20,
+    'n' : 40,
     'spTimesFun' : LFPy.inputgenerators.stationary_gamma,
     'args' : [cellParameters['tstartms'], cellParameters['tstopms'], 5, 20]
 }
@@ -88,18 +88,18 @@ clamp_1 = {
     'record_current' : True,
     'amp' : 1.9, #[nA]
     'dur' : 5.,
-    'delay' :295,
+    'delay' :20,
     #'freq' : 10,
     #'phase' : 0,
     #'pkamp' : 300e-3,
     'pptype' : 'IClamp',
 }
 clamp_2 = {
-    'idx' : 513,
+    'idx' : 611,
     'record_current' : True,
     'amp' : 1.9, #[nA]
     'dur' : 1,
-    'delay' :35,
+    'delay' :23,
     #'freq' : 10,
     #'phase' : 0,
     #'pkamp' : 300e-3,
@@ -126,6 +126,8 @@ def get_cell(output_folder, do_simulation = True):
             s.set_spike_times(spiketimes)
             #s.set_spike_times(spiketimes[count])
     cell = LFPy.Cell(**cellParameters)
+    cell.set_rotation(x = -pl.pi/2)
+    cell.set_rotation(y = pl.pi/2)
     if do_simulation:
         os.system('cp %s %s' %(sys.argv[0], output_folder))
         np.save(output_folder + 'x_start.npy', cell.xstart)
@@ -135,11 +137,11 @@ def get_cell(output_folder, do_simulation = True):
         np.save(output_folder + 'y_end.npy', cell.yend)
         np.save(output_folder + 'z_end.npy', cell.zend)
         np.save(output_folder + 'diam.npy', cell.diam)
-        currentClamp_1 = LFPy.StimIntElectrode(cell, **clamp_1)
+        #currentClamp_1 = LFPy.StimIntElectrode(cell, **clamp_1)
         #currentClamp_2 = LFPy.StimIntElectrode(cell, **clamp_2)
-        #insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
-        #insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
-        #insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
+        insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
+        insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
+        insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
         cell.simulate(**simulationParameters)
         np.save(output_folder + 'imem.npy', cell.imem)
         np.save(output_folder + 'vmem.npy', cell.vmem)
@@ -154,8 +156,8 @@ def get_cell(output_folder, do_simulation = True):
 
 if __name__ == '__main__':
     output_folder = 'hay_results/initial_test/'
-    do_simulation = True
-    plot_range = [294,310]
+    do_simulation = False
+    plot_range = [70,85]
     try:
         os.mkdir(output_folder)
     except(OSError):
@@ -166,5 +168,6 @@ if __name__ == '__main__':
     cell = get_cell(output_folder, do_simulation)
     
     #plot_cell_compartments(cell)
-    simple_plot_2D(cell, plot_range, clamp_1, clamp_2)
-    #push_simulation_to_folder('two_syn_AP_in_soma_long_delay', output_folder)
+    #simple_plot_2D(cell, plot_range, clamp_1, clamp_2)
+    push_simulation_to_folder('extracellular_test/', 'hay_results/initial_test/')
+   

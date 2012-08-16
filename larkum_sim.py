@@ -6,8 +6,7 @@ import sys
 import neuron
 from plotting import plotstuff, simple_plot_2D,\
      plot_cell_compartments
-from simulation import push_simulation_to_folder
-
+from tools import push_simulation_to_folder, analyze_neuron
 
 sim_folder = 'larkum_model/'
 #LFPy.cell.neuron.load_mechanisms(sim_folder)
@@ -22,10 +21,10 @@ cellParameters = {
     'passive' : True,           # switch on passive mechs
     'nsegs_method' : 'lambda_f',# method for setting number of segments,
     'lambda_f' : 100,           # segments are isopotential at this frequency
-    'timeres_NEURON' : 2**-3,   # dt of LFP and NEURON simulation.
-    'timeres_python' : 2**-3,
-    'tstartms' : 0,          #start time, recorders start at t=0
-    'tstopms' : 10,           #stop time of simulation
+    'timeres_NEURON' : 2**-4,   # dt of LFP and NEURON simulation.
+    'timeres_python' : 2**-4,
+    'tstartms' : -50,          #start time, recorders start at t=0
+    'tstopms' : 40,           #stop time of simulation
     'custom_code'  : [ sim_folder +'apical_simulation_changed.hoc'],     # will if given list of files run this file
 }
 
@@ -88,21 +87,31 @@ insert_synapses_GABA_A_args = {
 }
 
 clamp_1 = {
-    'idx' : 171,
+    'idx' : 431,
     'record_current' : True,
-    'amp' : 3.0, #[nA]
-    'dur' : 200,
-    'delay' :2,
+    'amp' : .8, #[nA]
+    'dur' : 2,
+    'delay' :21,
     'pptype' : 'IClamp',
 }
 clamp_2 = {
-    'idx' : 0,
+    'idx' : 349,
     'record_current' : True,
-    'amp' : 3.6, #[nA]
-    'dur' : 200,
-    'delay' :2,
+    'amp' : 0.8, #[nA]
+    'dur' : 2,
+    'delay' :21,
     'pptype' : 'IClamp',
 }
+
+clamp_3 = {
+    'idx' : 0,
+    'record_current' : True,
+    'amp' : .3, #[nA]
+    'dur' : 30,
+    'delay' :10,
+    'pptype' : 'IClamp',
+}
+
 
 # Parameters for the cell.simulate() call, recording membrane- and syn.-currents
 simulationParameters = {
@@ -142,11 +151,11 @@ def get_cell(output_folder, do_simulation = True):
         glut_syn.ntar = 0.3
         glut_syn.gmax = gmaxS
         glut_syn.Nspike=5
-        glut_syn.Tspike=5
+        glut_syn.Tspike=10
         return glut_syn
 
     cell = LFPy.Cell(**cellParameters)
-    cell.set_pos(xpos =  -50)
+    cell.set_pos(xpos = -50)
     #cell.set_rotation(x = pl.pi/2)
     #cell.set_rotation(z = pl.pi/2)
     cell.set_rotation(y = -pl.pi/2)
@@ -164,14 +173,15 @@ def get_cell(output_folder, do_simulation = True):
              np.save(output_folder + 'cai.npy',cell.rec_variables['cai'])
         except:
             pass
-        currentClamp_1 = LFPy.StimIntElectrode(cell, **clamp_1)
-        currentClamp_2 = LFPy.StimIntElectrode(cell, **clamp_2)
+        #currentClamp_1 = LFPy.StimIntElectrode(cell, **clamp_1)
+        #currentClamp_2 = LFPy.StimIntElectrode(cell, **clamp_2)
+        #currentClamp_3 = LFPy.StimIntElectrode(cell, **clamp_3)
         #insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
         #insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
         #insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
-        #glut_syn = insert_glutamate_stim(cell, section = 'apic[15]')
+        glut_syn = insert_glutamate_stim(cell, section = 'apic[15]')
         glut_syn1 = insert_glutamate_stim(cell, section = 'apic[45]')
-
+        glut_syn2 = insert_glutamate_stim(cell, section = 'apic[40]')
         cell.simulate(**simulationParameters)
         np.save(output_folder + 'imem.npy', cell.imem)
         np.save(output_folder + 'vmem.npy', cell.vmem)
@@ -191,10 +201,11 @@ def get_cell(output_folder, do_simulation = True):
 
 
 if __name__ == '__main__':
-    output_folder = 'larkum_results/initial_test/'
-    output_folder = 'larkum_Spikes_propagate_to_soma_when_hyperp./'
+    #output_folder = 'larkum_results/initial_test/'
+    output_folder = 'larkum_tuft_spike/'
+    #output_folder = 'extracellular_test/'
     do_simulation = True
-    plot_range = [0,40]
+    plot_range = [5,25]
     try:
         os.mkdir(output_folder)
     except(OSError):
@@ -204,5 +215,8 @@ if __name__ == '__main__':
             print "Loading simulation files..."
     cell = get_cell(output_folder, do_simulation)
     #plot_cell_compartments(cell)
-    #simple_plot_2D(cell, plot_range, clamp_1, clamp_2)
-    push_simulation_to_folder('extracellular_test/', output_folder)
+    simple_plot_2D(cell, plot_range, clamp_1, clamp_2)
+    #push_simulation_to_folder('extracellular_test/', output_folder)
+    #analyze_neuron(cell, signal_range = [22,26])
+
+

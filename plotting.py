@@ -153,7 +153,7 @@ def simple_plot_2D(cell, plot_range, clamp_1, clamp_2):
     #ica = cell.rec_variables['ica'][:,start_t_ixd:stop_t_ixd]
     #cai = cell.rec_variables['cai'][:,start_t_ixd:stop_t_ixd]
     imem = cell.imem[:,start_t_ixd:stop_t_ixd]
-    
+    signal = vmem
     n_tsteps = len(vmem[0,:])
     x = cell.xmid
     y = cell.ymid
@@ -168,43 +168,48 @@ def simple_plot_2D(cell, plot_range, clamp_1, clamp_2):
     # Initiate cell plot with membrane voltage
     ax = fig.add_axes([0.1,0.1,0.5,0.9])
     #scat = ax.scatter(x,z, c=ica[:,0], s=10*comp_size, vmin=-0.01, vmax=0.01)
-    scat = ax.scatter(z,y, c=vmem[:,0], s=10*comp_size, vmin=-50, vmax=20)
-    stim_point, = ax.plot([cell.zmid[stim_idx_1]], [cell.ymid[stim_idx_1]], 'D', color='w')
+    scat = ax.scatter(z,y, c=signal[:,0], s=10*comp_size, \
+                      vmin=np.min(signal), vmax=np.max(signal))
+    stim_point, = ax.plot([cell.zmid[stim_idx_1]], [cell.ymid[stim_idx_1]],\
+                          'D', color='w')
     #ax.axis('equal')
     ax.axis([-200, 300, -300,1200])
     pl.colorbar(scat)
 
     # Plot of soma membrane current
     ax2 = fig.add_axes([0.7,0.8,0.25,0.15])
-    ax2.set_title('vmem at soma')
-    ax2.axis([start_t, stop_t, np.min(vmem[0,:]), np.max(vmem[0,:])])
-    ax2.plot(t_array, vmem[0,:])
+    ax2.set_title('soma')
+    ax2.axis([start_t, stop_t, np.min(signal[0,:]), np.max(signal[0,:])])
+    ax2.plot(t_array, signal[0,:])
     time_bar, = ax2.plot([start_t,start_t], [0,9])
     time_template = 'time = %.3fms'
     time_text = ax.text(0, max(z)*1.1, '')
 
     # Stimulation point-1 current
     ax3 = fig.add_axes([0.7,0.6,0.25,0.15])
-    ax3.set_title('vmem at inj. point 1 (wh)')
-    ax3.axis([start_t, stop_t, np.min(vmem[stim_idx_1,:]), np.max(vmem[stim_idx_1,:])])
-    ax3.plot(t_array, vmem[stim_idx_1,:])
+    ax3.set_title('inj. point 1 (wh)')
+    ax3.axis([start_t, stop_t, np.min(signal[stim_idx_1,:]), \
+              np.max(signal[stim_idx_1,:])])
+    ax3.plot(t_array, signal[stim_idx_1,:])
 
     # Stimulation point-2 current
     ax4 = fig.add_axes([0.7,0.4,0.25,0.15])
-    ax4.set_title('vmem at inj. point 2 (ye)')
-    ax4.axis([start_t, stop_t, np.min(vmem[stim_idx_2,:]), np.max(vmem[stim_idx_2,:])])
-    ax4.plot(t_array, vmem[stim_idx_2,:])
+    ax4.set_title('inj. point 2 (ye)')
+    ax4.axis([start_t, stop_t, np.min(signal[stim_idx_2,:]), \
+              np.max(signal[stim_idx_2,:])])
+    ax4.plot(t_array, signal[stim_idx_2,:])
 
     # Chosen synaps membrane current
-    syn_numb = 423
+    syn_numb = 179
     ax4 = fig.add_axes([0.7,0.2,0.25,0.15])
-    ax4.set_title('vmem at point %d (gr)' %syn_numb)
+    ax4.set_title(' point %d (gr)' %syn_numb)
     ax.plot([cell.xmid[syn_numb]], [cell.zmid[syn_numb]], 'D', color='g')
-    ax4.axis([start_t, stop_t, np.min(vmem[syn_numb,:]), np.max(vmem[syn_numb,:])])
-    ax4.plot(t_array, vmem[syn_numb,:])
+    ax4.axis([start_t, stop_t, np.min(signal[syn_numb,:]), \
+              np.max(signal[syn_numb,:])])
+    ax4.plot(t_array, signal[syn_numb,:])
 
     ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
-                                  fargs=(vmem, scat, time_text, time_bar), blit=True, interval=.1, init_func=init)
+                                  fargs=(signal, scat, time_text, time_bar), blit=True, interval=.1, init_func=init)
     #ani.save('simple_plot.mp4')
     #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()

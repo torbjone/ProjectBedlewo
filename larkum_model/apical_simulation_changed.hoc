@@ -443,14 +443,14 @@ access soma
 //vshift_sca=-10
 //forsec apical vshift_hh3=-10
 
-tau1_glutamate=70
-tau2_glutamate=3
-gama_glutamate=0.08
-n_glutamate=0.3
-tau_ampa_glutamate=1
-tau_ampa_ampa=1
-global_ra = 80
-celsius = 34
+//tau1_glutamate=70
+//tau2_glutamate=3
+//gama_glutamate=0.08
+//n_glutamate=0.3
+//tau_ampa_glutamate=1
+//tau_ampa_ampa=1
+//global_ra = 80
+//celsius = 34
 
 //loclocation()
 //c_gmax()

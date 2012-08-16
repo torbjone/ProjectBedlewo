@@ -173,10 +173,10 @@ def animate_MEA(signal, cell, Mea, plot_range):
         for comp in xrange(n_compartments):
             pl.plot(cell.zmid, cell.ymid, 'o')
     #scat = ax.scatter(x,z, c=ica[:,0], s=10*comp_size, vmin=-0.01, vmax=0.01)
-    scat = ax.scatter(z,y, c=signal[:,0], s=500, vmin = np.min(signal), vmax = np.max(signal), marker = 'D')
+    scat = ax.scatter(z,y, c=signal[:,0], s=20, vmin = np.min(signal), vmax = np.max(signal), marker = 'D')
     stim_point, = ax.plot([cell.zmid[stim_idx_1]], [cell.ymid[stim_idx_1]], 'D', color='w')
     ax.axis('equal')
-    ax.axis([-0.05, .1, .500,1.0])
+    ax.axis([-0.2, .3, -.200,1.0])
     pl.colorbar(scat)
 
     # Plot of soma membrane current

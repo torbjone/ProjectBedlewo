@@ -99,6 +99,7 @@ set_up_parameters = {
     'sigma_3': [3.0, 3.0, 3.0], # Saline
     'slice_thickness': 0.2,
     'steps' : 20,
+    'detection_limit': 30, # [mV] spike sorting limit
     }
 
 if __name__ == '__main__':

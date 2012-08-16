@@ -7,9 +7,9 @@ class HD_MEA_CMOS128:
         self.pattern = 'honeycomp'
         self.electrode_pitch = 0.017
         self.electrode_separation = self.electrode_pitch*2 #0.2/100
-        self.n_elec_rows = 16
-        self.n_elec_cols = 8
-        self.n_elecs = 128
+        self.n_elec_rows = 3*16
+        self.n_elec_cols = 4*8
+        self.n_elecs = self.n_elec_cols * self.n_elec_rows
         self.cylinder_height = 3.
         self.sigma_E = .3
         self.sigma_S = 3.
@@ -19,8 +19,8 @@ class HD_MEA_CMOS128:
         i = 0
         for col in xrange(self.n_elec_cols):
             for row in xrange(self.n_elec_rows):
-                z_pos = -0.0 +col*self.electrode_pitch/np.sqrt(2)
-                y_pos = +0.55 + (self.n_elec_rows -row)*self.electrode_pitch*np.sqrt(2)
+                z_pos = -0.1 +col*self.electrode_pitch/np.sqrt(2)
+                y_pos = -0.2 + (self.n_elec_rows -row)*self.electrode_pitch*np.sqrt(2)
                 if col % 2 == 1:
                     y_pos += self.electrode_pitch/np.sqrt(2)
                 self.elec_z[i], self.elec_y[i]= z_pos, y_pos

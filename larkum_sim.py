@@ -20,7 +20,7 @@ cellParameters = {
     'e_pas' : -65,              # reversal potential passive mechs
     'passive' : True,           # switch on passive mechs
     'nsegs_method' : 'lambda_f',# method for setting number of segments,
-    'lambda_f' : 100,           # segments are isopotential at this frequency
+    'lambda_f' : 500,           # segments are isopotential at this frequency
     'timeres_NEURON' : 2**-4,   # dt of LFP and NEURON simulation.
     'timeres_python' : 2**-4,
     'tstartms' : -50,          #start time, recorders start at t=0
@@ -142,7 +142,7 @@ def get_cell(output_folder, do_simulation = True):
             #s.set_spike_times(spiketimes[count])
 
     def insert_glutamate_stim(cell, section = 'apic[15]'):
-        gmaxS=7
+        gmaxS=1
         #for comp in neuron.h.dend:
         neuron.h('access %s' %section)
         glut_syn = neuron.h.glutamate(0.5)
@@ -150,14 +150,14 @@ def get_cell(output_folder, do_simulation = True):
         glut_syn.delay = 5
         glut_syn.ntar = 0.3
         glut_syn.gmax = gmaxS
-        glut_syn.Nspike=5
-        glut_syn.Tspike=10
+        glut_syn.Nspike=10
+        glut_syn.Tspike=3
         return glut_syn
 
     cell = LFPy.Cell(**cellParameters)
     cell.set_pos(xpos = -50)
     #cell.set_rotation(x = pl.pi/2)
-    #cell.set_rotation(z = pl.pi/2)
+    #cell.set_rotation(y = -pl.pi/25)
     cell.set_rotation(y = -pl.pi/2)
     if do_simulation:
         os.system('cp %s %s' %(sys.argv[0], output_folder))

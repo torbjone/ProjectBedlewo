@@ -95,7 +95,7 @@ def make_test_mea():
     return Mea
 set_up_parameters = {
     'sigma_1': [0.0, 0.0, 0.0], # Below Electrode
-    'sigma_2': [0.3, 0.3, 0.3], # Tissue
+    'sigma_2': [0.22, 0.22, 0.22], # Tissue
     'sigma_3': [3.0, 3.0, 3.0], # Saline
     'slice_thickness': 0.2,
     'steps' : 20,
@@ -110,6 +110,7 @@ if __name__ == '__main__':
     #Mea = make_test_mea()
     from larkum_sim import get_cell
     cell = get_cell(neuron_folder, False)
+    
     #cell = make_test_cell()
     Moi = MoI.MoI(set_up_parameters, True)
     #plot_electrodes_and_neuron(cell, Mea)
@@ -117,6 +118,6 @@ if __name__ == '__main__':
     signal = find_signal_at_electrodes(cell, Mea, mapping, output_folder, False)
     #print mapping
     #plot_interval_on_all_elecs(cell, signal, [20,30], Mea)
-    #plot_neuron_from_side(cell, Mea, set_up_parameters)
-    animate_MEA(signal, cell, Mea, [5,10])
+    plot_neuron_from_side(cell, Mea, set_up_parameters)
+    #animate_MEA(signal, cell, Mea, [5,10])
     #analyze_neuron(cell, mapping, Mea, signal_range = [5,10])

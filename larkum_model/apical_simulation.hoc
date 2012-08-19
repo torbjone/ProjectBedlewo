@@ -573,11 +573,9 @@ proc loclocation(){
 	forsec tuftS{
 		numbranchesS=numbranchesS+1
 	}
-
 	rdel.uniform(0, 1000)
 	r.uniform(0, numbranchesS-1)
 	for i=0,numS-1{
-
 		loc=int(r.repick())
 		count=0
 		forsec tuftS{
@@ -586,7 +584,6 @@ proc loclocation(){
 				stfunc.right(st,5)
 				stfunc.left(st,stfunc.len(st)-1)
 				sscanf(st,"%d",&dendnum)
-
 			}//if
 			count=count+1
 		}//forsec

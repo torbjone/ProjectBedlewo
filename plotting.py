@@ -17,10 +17,12 @@ def plot_cell_compartments(cell):
     pl.close('all')
 
 def plotstuff(cell, clamp_1, clamp_2):
-    fig = pl.figure(figsize=[12, 8])
-    
+    fig = pl.figure(figsize=[12, 8])   
     ax = fig.add_axes([0.1, 0.7, 0.5, 0.2])
     ax.plot(cell.tvec,cell.vmem[0,:])
+    ax.plot(cell.tvec,cell.vmem[cell.apic_11,:])
+    ax.plot(cell.tvec,cell.vmem[cell.apic_58,:])
+    ax.plot(cell.tvec,cell.vmem[cell.apic_59,:])
     ax.set_xlabel('Time [ms]')
     ax.set_ylabel('Soma trans. current')
     
@@ -209,7 +211,7 @@ def simple_plot_2D(cell, plot_range, clamp_1, clamp_2):
     ax4.plot(t_array, signal[syn_numb,:])
 
     ani = animation.FuncAnimation(fig, update_plot, frames=xrange(n_tsteps),
-                                  fargs=(signal, scat, time_text, time_bar), blit=True, interval=.1, init_func=init)
+                                  fargs=(signal, scat, time_text, time_bar), blit=True, interval=.001, init_func=init)
     #ani.save('simple_plot.mp4')
     #ani.ffmpeg_cmd('simple_plot.mp4', fps=5, codec='mpeg4',  frame_prefix='_tmp')    
     pl.show()

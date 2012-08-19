@@ -8,23 +8,44 @@ from plotting import plotstuff, simple_plot_2D,\
      plot_cell_compartments
 from tools import push_simulation_to_folder, analyze_neuron
 
+
+class HOCProxy(object):
+	def __init__(self, interp):
+		self.interp = interp
+
+	def __getattr__(self, name,):
+		fnc = getattr(self.interp, name)
+		def my_call(*args,**kwargs):
+			print name, args, kwargs
+			return fnc(*args,**kwargs)
+		return my_call
+			
+
+	def __call__(self, *args, **kwargs):
+		print args, kwargs
+		return self.interp(*args, **kwargs)
+
+old_interp = neuron.h
+#neuron.h = HOCProxy(old_interp)
+
+
 sim_folder = 'larkum_model/'
-#LFPy.cell.neuron.load_mechanisms(sim_folder)
+LFPy.cell.neuron.load_mechanisms(sim_folder)
 
 cellParameters = {
     'morphology' : sim_folder + '070603c2_copy.hoc',
-    'rm' : 30000,               # membrane resistance
-    'cm' : 1.0,                 # membrane capacitance
-    'Ra' : 90,                 # axial resistance
-    'v_init' : -60,             # initial crossmembrane potential
-    'e_pas' : -65,              # reversal potential passive mechs
-    'passive' : True,           # switch on passive mechs
-    'nsegs_method' : 'lambda_f',# method for setting number of segments,
-    'lambda_f' : 500,           # segments are isopotential at this frequency
-    'timeres_NEURON' : 2**-4,   # dt of LFP and NEURON simulation.
-    'timeres_python' : 2**-4,
-    'tstartms' : -50,          #start time, recorders start at t=0
-    'tstopms' : 40,           #stop time of simulation
+    #'rm' : 20000,               # membrane resistance
+    #'cm' : 1.,                 # membrane capacitance
+    #'Ra' : 80,                 # axial resistance
+    #'v_init' : -70,             # initial crossmembrane potential
+    #'e_pas' : -70,              # reversal potential passive mechs
+    #'passive' : True,           # switch on passive mechs
+    #'nsegs_method' : 'lambda_f',# method for setting number of segments,
+    #'lambda_f' : 500,           # segments are isopotential at this frequency
+    'timeres_NEURON' : 2**-3.,   # dt of LFP and NEURON simulation.
+    'timeres_python' : 2**-3,
+    'tstartms' : 0,          #start time, recorders start at t=0
+    'tstopms' : 120,           #stop time of simulation
     'custom_code'  : [ sim_folder +'apical_simulation_changed.hoc'],     # will if given list of files run this file
 }
 
@@ -67,33 +88,34 @@ synapseParameters_GABA_A = {
 insert_synapses_AMPA_args = {
     'name' : 'AMPA',
     'section' : 'allsec',
-    'n' : 200,
+    'n' : 100,
     'spTimesFun' : LFPy.inputgenerators.stationary_gamma,
     'args' : [cellParameters['tstartms'], cellParameters['tstopms'], 2, 10]
 }
 insert_synapses_NMDA_args = {
     'name' : 'NMDA',
     'section' : 'alldend',
-    'n' : 200,
+    'n' : 20,
     'spTimesFun' : LFPy.inputgenerators.stationary_gamma,
     'args' : [cellParameters['tstartms'], cellParameters['tstopms'], 5, 20]
 }
 insert_synapses_GABA_A_args = {
     'name' : 'GABA_A',
     'section' : 'dend',
-    'n' : 50,
+    'n' : 100,
     'spTimesFun' : LFPy.inputgenerators.stationary_gamma,
     'args' : [cellParameters['tstartms'], cellParameters['tstopms'], 2, 10]
 }
 
 clamp_1 = {
-    'idx' : 431,
+    'idx' : 415,
     'record_current' : True,
-    'amp' : .8, #[nA]
-    'dur' : 2,
-    'delay' :21,
+    'amp' : 10.0, #[nA]
+    'dur' : 4,
+    'delay' :50,
     'pptype' : 'IClamp',
 }
+
 clamp_2 = {
     'idx' : 349,
     'record_current' : True,
@@ -141,20 +163,43 @@ def get_cell(output_folder, do_simulation = True):
             s.set_spike_times(spiketimes)
             #s.set_spike_times(spiketimes[count])
 
-    def insert_glutamate_stim(cell, section = 'apic[15]'):
-        gmaxS=1
-        #for comp in neuron.h.dend:
+    def insert_glutamate_stim(cell, section = 'apic[63]', site = 0.5):
+        gmaxS=20
         neuron.h('access %s' %section)
-        glut_syn = neuron.h.glutamate(0.5)
-        #glut_syn.dt = cellParameters['timeres_NEURON']
-        glut_syn.delay = 5
-        glut_syn.ntar = 0.3
+        glut_syn = neuron.h.glutamate(site)
+        glut_syn.delay = 50
+        glut_syn.ntar = 1
         glut_syn.gmax = gmaxS
-        glut_syn.Nspike=10
-        glut_syn.Tspike=3
+        glut_syn.Nspike=3
+        glut_syn.Tspike=20
         return glut_syn
 
+    def insert_many_glutamate_stim(cell, nSyn = 100):
+	import random
+        gmaxS=1
+	syn_array = []
+	i = 0
+	while i < nSyn:
+	    apic_sec = random.randint(0,115)
+	    section = 'apic[%d]' % apic_sec
+	    comps = cell.get_idx_section(section)
+	    if cell.ymid[random.choice(comps)] > 600:
+		neuron.h('access %s' % section)
+		syn_array.append(neuron.h.glutamate(0.5))
+		syn_array[-1].delay = 50
+		syn_array[-1].ntar = 1
+		syn_array[-1].gmax = gmaxS
+		syn_array[-1].Nspike=3
+		syn_array[-1].Tspike=20
+		i += 1
+        return syn_array
+
     cell = LFPy.Cell(**cellParameters)
+    cell.apic_11 = cell.get_closest_idx(x=53, y=436.98, z=-1.15)
+    cell.apic_58 = cell.get_closest_idx(x=30.9, y=740.47, z=-31.7)
+    cell.apic_59 = cell.get_closest_idx(x = 30.21, y = 811.43, z = -39.85)
+
+    
     cell.set_pos(xpos = -50)
     #cell.set_rotation(x = pl.pi/2)
     #cell.set_rotation(y = -pl.pi/25)
@@ -178,10 +223,13 @@ def get_cell(output_folder, do_simulation = True):
         #currentClamp_3 = LFPy.StimIntElectrode(cell, **clamp_3)
         #insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
         #insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
-        #insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
-        glut_syn = insert_glutamate_stim(cell, section = 'apic[15]')
-        glut_syn1 = insert_glutamate_stim(cell, section = 'apic[45]')
-        glut_syn2 = insert_glutamate_stim(cell, section = 'apic[40]')
+	#insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
+        #glut_syn = insert_glutamate_stim(cell, section = 'apic[63]')
+	#glut_syn2 = insert_glutamate_stim(cell, section = 'apic[45]')
+	#glut_syn = insert_many_glutamate_stim(cell, 200)
+        glut_syn1 = insert_glutamate_stim(cell, section = 'apic[63]', site = 0.59)
+        glut_syn2 = insert_glutamate_stim(cell, section = 'apic[71]', site = 0.59)
+	glut_syn2 = insert_glutamate_stim(cell, section = 'apic[71]', site = 0.3)
         cell.simulate(**simulationParameters)
         np.save(output_folder + 'imem.npy', cell.imem)
         np.save(output_folder + 'vmem.npy', cell.vmem)
@@ -203,9 +251,9 @@ def get_cell(output_folder, do_simulation = True):
 if __name__ == '__main__':
     #output_folder = 'larkum_results/initial_test/'
     output_folder = 'larkum_tuft_spike/'
-    #output_folder = 'extracellular_test/'
+    #output_folder = 'larkum_Spikes_traveling_both_ways_initiated_by_inj/'
     do_simulation = True
-    plot_range = [5,25]
+    plot_range = [40,120]
     try:
         os.mkdir(output_folder)
     except(OSError):
@@ -215,7 +263,7 @@ if __name__ == '__main__':
             print "Loading simulation files..."
     cell = get_cell(output_folder, do_simulation)
     #plot_cell_compartments(cell)
-    simple_plot_2D(cell, plot_range, clamp_1, clamp_2)
+    #simple_plot_2D(cell, plot_range, clamp_1, clamp_2)
     #push_simulation_to_folder('extracellular_test/', output_folder)
     #analyze_neuron(cell, signal_range = [22,26])
 

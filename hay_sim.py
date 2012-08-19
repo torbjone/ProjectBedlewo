@@ -142,6 +142,11 @@ def get_cell(output_folder, do_simulation = True):
         insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
         insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
         insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
+
+        neuron.h('objref n_vec')
+        neuron.h('n_vec = new Vector()')
+        neuron.h('n_vec.record(&soma.m_hh(0.5))')
+        
         cell.simulate(**simulationParameters)
         np.save(output_folder + 'imem.npy', cell.imem)
         np.save(output_folder + 'vmem.npy', cell.vmem)
@@ -156,7 +161,7 @@ def get_cell(output_folder, do_simulation = True):
 
 if __name__ == '__main__':
     output_folder = 'hay_results/initial_test/'
-    do_simulation = False
+    do_simulation = True
     plot_range = [70,85]
     try:
         os.mkdir(output_folder)
@@ -169,5 +174,5 @@ if __name__ == '__main__':
     
     #plot_cell_compartments(cell)
     #simple_plot_2D(cell, plot_range, clamp_1, clamp_2)
-    push_simulation_to_folder('extracellular_test/', 'hay_results/initial_test/')
+    #push_simulation_to_folder('extracellular_test/', 'hay_results/initial_test/')
    

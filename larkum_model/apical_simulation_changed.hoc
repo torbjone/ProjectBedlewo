@@ -1,3 +1,11 @@
+
+axon.L=10
+axon.diam=5
+create axon1
+connect axon1(0),axon(1)
+axon1.L=200
+axon1.diam=1
+
 objref basal,apical,trunk,hotzone // Funny ??
 objref tuft,tuftE,tuftS,temp,tuft1[6]
 objref secv,sref
@@ -101,11 +109,13 @@ forall {
 }
 forsec tuft cm=1.4
 forsec apical	diam=diam*1.2
+
 forsec tuft {
-	hbar=0.001//0.005
 	insert hd
+	hbar=0.001  //0.005
 	ghdbar_hd=hbar
 }
+
 access soma
 apic_it=0.000
 apic_il=1
@@ -134,6 +144,12 @@ soma_kdr=0
 soma_ka=0.06
 soma_km=10
 
+axon_na=3
+axon_k1=0.8
+axon_k2=1
+axon_kdr=0
+axon_km=0
+
 taun_hh3=1.5
 taun2_hh3=10
 tauh_hh3=.6
@@ -146,7 +162,6 @@ hot_dis_prox=00
 hot_it=0.000
 hot_il=10
 hot_kca=30
-
 hot_k1=0
 hot_k2=0.0001
 hot_ka=0.003
@@ -177,8 +192,10 @@ proc ca_hot_zone(){
 	vshift_it2=-10
 	vm1_it2=50
 	vm2_it2=125
+
 	insert sca
 	gbar_sca=apic_il
+
 	insert hh3
 	gnabar_hh3=apic_na
 	gkbar_hh3=apic_k1
@@ -192,6 +209,7 @@ proc ca_hot_zone(){
 	//trunk
 	trunk.remove(trunk)
 	for i = 0, 11 apic[i] trunk.append()
+
 	access apic[10]
 	distance()
 	forsec tuft {
@@ -236,7 +254,7 @@ proc ca_hot_zone(){
 		gbar_km=hot_km
 		gnabar_hh3=hot_na
 		gbar_kdr=hot_kdr
-	}	
+	}
 	access soma
 	insert hh3
 	gnabar_hh3=soma_na
@@ -247,7 +265,32 @@ proc ca_hot_zone(){
 	gbar_km=soma_km
 	insert kdr
 	gbar_kdr=soma_kdr
+	access axon
+	insert hh3
+	gnabar_hh3=axon_na
+	gkbar_hh3=axon_k1
+	gl_hh3=0
+	gkbar2_hh3=axon_k2
+	insert km
+	gbar_km=axon_km
+	insert kdr
+	gbar_kdr=axon_kdr
+
+	access axon1
+	insert hh3
+	gnabar_hh3=axon_na
+	gkbar_hh3=axon_k1
+	gl_hh3=0
+	gkbar2_hh3=axon_k2
+	insert km
+	gbar_km=axon_km
+	insert kdr
+	gbar_kdr=axon_kdr
+
 	access soma
+
+
+
 }
 ca_hot_zone()
 access soma
@@ -256,28 +299,30 @@ forsec apical {nseg=11}
 objref all
 all = new SectionList()
 forall all.append()
-access soma
+
+access axon
+all.remove()
+access axon1
 all.remove()
 
-
-
-
+access soma
+all.remove()
 
 //print "START OF SIMULATION"
 //**********random synapses//
 numinputs=1
 numS=100
-numE=100
-numI=30
+numE=1
+numI=1
 objref synS[numS]
 objref synE[numE]
 objref synI[numI]
-generation=0//other than 0 will lead to select by bifurcation
-pretype=3//1=on one dend;2=2 dends;3=all tuft
+generation=3//other than 0 will lead to select by bifurcation
+pretype=1//1=on one dend;2=2 dends;3=all tuft
 
 gmaxS=1
-gmaxE=1
-gmaxI=1
+gmaxE=0
+gmaxI=0
 DendS=10
 DendE=10
 delmean=5
@@ -285,11 +330,9 @@ nmdaampa=1
 
 dends2=0
 subtuftproxS=00
-subtuftdistS=0000
+subtuftdistS=000
 subtuftproxE=00
-subtuftdistE=0000
-
-
+subtuftdistE=000
 
 objref r,rseg,rdel
 r= new Random()
@@ -312,6 +355,8 @@ proc c_gmax(){
 
 //LOCAL SYNAPSES
 proc loclocation(){
+	printf("Enters LocLocation....")
+	
 	objref synS[numS]
 	objref synE[numE]
 	objref synI[numI]
@@ -384,74 +429,28 @@ proc loclocation(){
 		synS[i].Nspike=3
 		synS[i].Tspike=20
 	}//numS
-	r.uniform(0, numbranchesE-1)
-	for i=0,numE-1{
-		loc=int(r.repick())
-		count=0
-		forsec tuftE{
-			if (count==loc){
-				sprint(st,"%s",secname())
-				stfunc.right(st,5)
-				stfunc.left(st,stfunc.len(st)-1)
-				sscanf(st,"%d",&dendnum)
-			}//if
-			count=count+1
-		}//forsec
-		access apic[dendnum]
-		rseg.uniform(.1,.9)
-		if (nmdaampa==1){
-			synE[i]=new glutamate(rseg.repick)
-		  	synE[i].ntar=1
-		}else{
-	      	synE[i]=new ampa(rseg.repick)
-		}
-		
-		synE[i].gmax=gmaxE
-		synE[i].del=rdel.repick()
-		synE[i].Nspike=1
-		synE[i].Tspike=20
-	}//numE
-	for i=0,numI-1{
 
-		loc=int(r.repick())
-		count=0
-		forsec tuftE{
-			if (count==loc){
-				sprint(st,"%s",secname())
-				stfunc.right(st,5)
-				stfunc.left(st,stfunc.len(st)-1)
-				sscanf(st,"%d",&dendnum)
-			}//if
-			count=count+1
-		}//forsec
-		access apic[dendnum]
-		rseg.uniform(.1,.9)
-		synI[i]=new AlphaSynapse(rseg.repick)
-		synI[i].gmax=gmaxI/1000
-		synI[i].onset=rdel.repick()
-		synI[i].tau=3
-		synI[i].e=-70
-	}//numE	
-		//make_shape_plot()
-}//LOCAL SYNAPSES
+	
+	printf("Exits LocLocation....")
+}
 
 
 
+//load_file("larkum_model/apic.ses")//the cell
+
+vshift_sca=-10
+forsec apical vshift_hh3=-10
+
+tau1_glutamate=90
+tau2_glutamate=4
+gama_glutamate=0.08
+n_glutamate=0.2
+tau_ampa_glutamate=2
+tau_ampa_ampa=1
+cah_glutamate = 8
+tau_h_glutamate = 1000
+global_ra = 95
+celsius = 35
 
 access soma
-
-//vshift_sca=-10
-//forsec apical vshift_hh3=-10
-
-//tau1_glutamate=70
-//tau2_glutamate=3
-//gama_glutamate=0.08
-//n_glutamate=0.3
-//tau_ampa_glutamate=1
-//tau_ampa_ampa=1
-//global_ra = 80
-//celsius = 34
-
-//loclocation()
-//c_gmax()
-
+printf("Exits apical_simulation_changed....")

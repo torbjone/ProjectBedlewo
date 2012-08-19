@@ -1,4 +1,19 @@
 
+celsius = 35
+dt = 0.125
+//tau_ampa_ampa=1
+//tau1_glutamate=90
+//tau2_glutamate=4
+//gama_glutamate=0.08
+//n_glutamate=0.2
+//tau_ampa_glutamate=2
+//cah_glutamate = 8
+//tauh_glutamate = 1000
+
+
+
+
+
 axon.L=10
 axon.diam=5
 create axon1
@@ -288,9 +303,6 @@ proc ca_hot_zone(){
 	gbar_kdr=axon_kdr
 
 	access soma
-
-
-
 }
 ca_hot_zone()
 access soma
@@ -308,149 +320,57 @@ all.remove()
 access soma
 all.remove()
 
-//print "START OF SIMULATION"
-//**********random synapses//
-numinputs=1
-numS=100
-numE=1
-numI=1
-objref synS[numS]
-objref synE[numE]
-objref synI[numI]
-generation=3//other than 0 will lead to select by bifurcation
-pretype=1//1=on one dend;2=2 dends;3=all tuft
-
-gmaxS=1
-gmaxE=0
-gmaxI=0
-DendS=10
-DendE=10
-delmean=5
-nmdaampa=1
-
-dends2=0
-subtuftproxS=00
-subtuftdistS=000
-subtuftproxE=00
-subtuftdistE=000
-
-objref r,rseg,rdel
-r= new Random()
-rseg= new Random()
-rdel= new Random()
-objref stfunc,shape
-stfunc=new StringFunctions()
-
-proc c_gmax(){
-	for i=0,numS-1{
-		synS[i].gmax=gmaxS
-	}
-	for i=0,numE-1{
-		synE[i].gmax=gmaxE
-	}
-	for i=0,numI-1{
-		synI[i].gmax=gmaxI
-	}
-}
-
-//LOCAL SYNAPSES
-proc loclocation(){
-	printf("Enters LocLocation....")
-	
-	objref synS[numS]
-	objref synE[numE]
-	objref synI[numI]
-	dendnumE=0
-	dendnumS=0
-	dendnum=0
-	dendnum1=0
-	strdef st
-	count=0
-	groupc=0
-	groupd=0	
-	st=""
-	found=0
-	tuftE = new SectionList()	
-	access apic[DendE]
-	temp = new SectionList()
-	temp.subtree()
-	distance()
-	forsec temp {
-		if ( (distance(0.5)<subtuftdistE) && ( distance(0.5)>subtuftproxE) ){
-			tuftE.append()
-		}
-	}
-	numbranchesE=0
-	forsec tuftE{
-		numbranchesE=numbranchesE+1
-	}
-	tuftS = new SectionList()
-	temp = new SectionList()	
-	access apic[DendS]
-	if ((generation==0)||(generation>=6)){
-		temp.subtree()
-		distance()
-		forsec temp {
-			if ( (distance(0.5)<subtuftdistS) && ( distance(0.5)>subtuftproxS) ){
-				tuftS.append()
-			}
-		}
-	}else{
-		tuftS=tuft1[generation-1]
-	}//generation
-	numbranchesS=0
-	forsec tuftS{
-		numbranchesS=numbranchesS+1
-	}
-	rdel.uniform(0, 1000)
-	r.uniform(0, numbranchesS-1)
-	for i=0,numS-1{
-		loc=int(r.repick())
-		count=0
-		forsec tuftS{
-			if (count==loc){
-				sprint(st,"%s",secname())
-				stfunc.right(st,5)
-				stfunc.left(st,stfunc.len(st)-1)
-				sscanf(st,"%d",&dendnum)
-			}//if
-			count=count+1
-		}//forsec
-		access apic[dendnum]
-		rseg.uniform(.1,.9)
-		if (nmdaampa==1){
-			synS[i]=new glutamate(rseg.repick)
-		  	synS[i].ntar=1
-		}else{
-	      	synS[i]=new ampa(rseg.repick)
-		}
-		synS[i].gmax=gmaxS
-		synS[i].del=50
-		synS[i].Nspike=3
-		synS[i].Tspike=20
-	}//numS
-
-	
-	printf("Exits LocLocation....")
-}
-
-
-
-//load_file("larkum_model/apic.ses")//the cell
-
 vshift_sca=-10
 forsec apical vshift_hh3=-10
 
-tau1_glutamate=90
-tau2_glutamate=4
-gama_glutamate=0.08
-n_glutamate=0.2
-tau_ampa_glutamate=2
-tau_ampa_ampa=1
-cah_glutamate = 8
-tau_h_glutamate = 1000
-global_ra = 95
-celsius = 35
+access apic[63]
+objref synS1
+synS1 = new glutamate(0.9)
+synS1.ntar=1.3
+synS1.gmax=0
+synS1.del=50
+synS1.Nspike=3
+synS1.Tspike=20
 
-access soma
-printf("Exits apical_simulation_changed....")
+access apic[73]
+objref synS2
+synS2 = new glutamate(0.59)
+synS2.ntar=1.3
+synS2.gmax=0
+synS2.del=50
+synS2.Nspike=3
+synS2.Tspike=20
+
+access apic[73]
+objref synS3
+synS3 = new glutamate(0.8)
+synS3.ntar=1.3
+synS3.gmax=0
+synS3.del=50
+synS3.Nspike=3
+synS3.Tspike=20
+
+
+// To record the same as in the NEURON apic.ses file
+objref rec_som_v, rec_a11_v, rec_a58_v, rec_a59_v, rec_a63_v
+rec_som_v = new Vector()
+rec_som_v.record(&soma.v(0.5))
+rec_a11_v = new Vector()
+rec_a11_v.record(&apic[11].v(0.5))
+rec_a58_v = new Vector()
+rec_a58_v.record(&apic[58].v(0.5))
+rec_a59_v = new Vector()
+rec_a59_v.record(&apic[59].v(0.5))
+rec_a63_v = new Vector()
+rec_a63_v.record(&apic[63].v(0.5))
+
+// Record a bunch of glutamate stuff
+//objref rec_gnmda, rec_gampa, rec_inmda, rec_gh
+//rec_gnmda = new Vector()
+//rec_gnmda.record(&inmda)
+//rec_gampa = new Vector()
+//rec_gampa.record(&gampa)
+//rec_inmda = new Vector()
+//rec_inmda.record(&inmda)
+//rec_gh = new Vector()
+//rec_gh.record(&gh)

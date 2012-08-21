@@ -1,7 +1,130 @@
 import pylab as pl
 import numpy as np
 
-def plot_interval_on_all_elecs(cell, signal_at_elec, t_interval, Mea):
+def plot_alot(signal_at_elec, cell, t_range, Mea, out_name):
+    pl.close('all')
+    n_elecs = Mea.n_elecs
+    electrode_separation = Mea.electrode_separation
+    t_array = cell.tvec
+    fig = pl.figure(figsize=[10, 10])
+    ax = fig.add_axes([0.3, 0.05, 0.7, .9], frameon=False)
+    ax.axis([-0.3,0.6,-0.2,1.1])
+    #ax.axis('equal')
+    n_compartments = len(cell.diam)#neuron.total_n_compartments
+
+    for i in xrange(n_compartments):
+        if i == 0:
+            xcoords = pl.array([cell.xmid[i]/1000])
+            ycoords = pl.array([cell.ymid[i]/1000])
+            zcoords = pl.array([cell.zmid[i]/1000])
+            diams = pl.array([cell.diam[i]/1000])
+        else:
+            if cell.zmid[i] < 100 and cell.zmid[i] > -100 and \
+                    cell.xmid[i] < 100 and cell.xmid[i] > -100:
+                xcoords = pl.r_[xcoords, pl.linspace(cell.xstart[i], cell.xend[i], cell.length[i]*3)/1000]
+                ycoords = pl.r_[ycoords, pl.linspace(cell.ystart[i], cell.yend[i], cell.length[i]*3)/1000]   
+                zcoords = pl.r_[zcoords, pl.linspace(cell.zstart[i], cell.zend[i], cell.length[i]*3)/1000]   
+                diams = pl.r_[diams, pl.linspace(cell.diam[i], cell.diam[i],cell.length[i]*3)]
+    argsort = pl.argsort(-xcoords)
+    ax.scatter(zcoords[argsort], ycoords[argsort], s=2*diams[argsort]**2,
+                   edgecolors='none', c='gray')#, cmap='gray',c=xcoords[argsort])    
+    ax.scatter(Mea.elec_z, Mea.elec_y, color='m', s= 2)
+
+    t_start = t_range[0]
+    t_stop = t_range[1]
+    t_start_index = np.abs(t_array[:] - t_start).argmin()
+    t_stop_index = np.abs(t_array[:] - t_stop).argmin()
+    t_array = t_array[t_start_index:t_stop_index] - t_array[t_start_index]
+    signal_at_elec = signal_at_elec[:,t_start_index:t_stop_index]
+    
+    #chosen_imem = chosen_imem[t_start_index:t_stop_index]    
+    time_factor = 1./(t_stop - t_start)*electrode_separation/2
+    signal_range = 15#np.max(signal_at_elec) - np.min(signal_at_elec)
+    pot_factor  = electrode_separation/signal_range
+    for elec in xrange(n_elecs):
+        t = t_array*time_factor + Mea.elec_z[elec]
+        trace = (signal_at_elec[elec])*pot_factor + Mea.elec_y[elec]  
+        ax.plot(t, trace, color='r', lw = 3)
+
+    #pl.figure()
+    #pl.plot(t_array, chosen_imem, color='r', lw = 3)
+    #pl.plot(t_array[130:-95], chosen_imem[130:-95], color='k', lw = 3)
+        
+    #ax.axis([-0.1, 0.1, -0.1, 0.1])           
+    #ax.axis([1.1*np.min(Mea.elec_z),1.1*np.max(Mea.elec_z) , 1.1*np.min(Mea.elec_y),1.1*np.max(Mea.elec_y) ])
+    
+    ax.plot([0.3, 0.3 + electrode_separation/2], [0.1, 0.1], color='k', lw = 4)
+    ax.text(0.32, 0.105, '%g ms' % int(t_stop-t_start))
+    
+    ax.plot([0.305, 0.355], [0.01, 0.01], color='k', lw = 4)
+    ax.text(0.32, 0.06, '50 $\mu$m')
+    
+    ax.plot([0.3, 0.3], [0.01, 0.01 + electrode_separation], color='r', lw=4)
+    ax.text(0.32, 0.01 +electrode_separation/2 , '%g $\mu$V' % signal_range)
+
+    #pl.xlabel('z [$\mu$m]')
+    #pl.ylabel('y [$\mu$m]')
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    ax2 = fig.add_axes([0.05, 0.1, 0.2, 0.2])
+    ax2.set_title('Membrane voltage')
+    ax2.set_xlabel('Time [ms]')
+    ax2.set_ylabel('mV')
+    #ax2.plot(cell.tvec[t_start_index:t_stop_index], \
+    #         cell.vmem[0,t_start_index:t_stop_index])
+    #import random
+    #comp = random.choice(cell.get_idx_section('apic[63]'))
+    comp_list = np.r_[0, 615, 646, 671, 623, 628, 657]
+    for comp in comp_list:
+        ax2.plot(cell.tvec[t_start_index:t_stop_index], \
+             cell.vmem[comp,t_start_index:t_stop_index])
+        
+    ax3 = fig.add_axes([0.05, 0.4, 0.2, 0.2])
+    ax3.set_title('Membrane currents')
+    ax3.set_xlabel('Time [ms]')
+    ax3.set_ylabel('nA')
+    #ax2.plot(cell.tvec[t_start_index:t_stop_index], \
+    #         cell.vmem[0,t_start_index:t_stop_index])
+    #import random
+    #comp = random.choice(cell.get_idx_section('apic[63]'))
+    comp_list = np.r_[0, 615, 646, 671, 623, 628, 657]
+    for comp in comp_list:
+        ax3.plot(cell.tvec[t_start_index:t_stop_index], \
+             cell.imem[comp,t_start_index:t_stop_index])
+
+    ax4 = fig.add_axes([0.05, 0.7, 0.2, 0.2])
+    ax4.set_title('Signal at electrodes')
+    ax4.set_xlabel('Time [ms]')
+    ax4.set_ylabel('$\mu$V')
+
+    for elec in xrange(Mea.n_elecs):
+        ax4.plot(cell.tvec[t_start_index:t_stop_index], \
+             signal_at_elec[elec,:])
+    pl.savefig(out_name) 
+    ## ax.set_title('Location-dependent extracellular spike shapes')
+    
+    ## #plotting the soma trace    
+    ## ax = fig.add_axes([0.75, 0.55, 0.2, 0.35])
+    ## ax.plot(tvec, somav)
+    ## ax.set_title('Somatic action-potential')
+    ## ax.set_ylabel(r'$V_\mathrm{membrane}$ (mV)')
+    ## #plotting the synaptic current
+    ## ax = fig.add_axes([0.75, 0.1, 0.2, 0.35])
+    ## ax.plot(tvec, synapses[0].i)
+    ## ax.set_title('Synaptic current')
+    ## ax.set_ylabel(r'$i_\mathrm{synapse}$ (nA)')
+    ## ax.set_xlabel(r'time (ms)')
+    ## #ax.axis([150,200, -1.5,1])
+    #pl.savefig('morph_n_currents.png')
+
+
+
+
+
+
+
+def plot_interval_on_all_elecs(cell, close_sig, signal_at_elec, t_interval, Mea):
     pl.close('all')
     n_elecs = Mea.n_elecs
     n_compartments = len(cell.imem[:,0])
@@ -10,31 +133,38 @@ def plot_interval_on_all_elecs(cell, signal_at_elec, t_interval, Mea):
     t_start, t_stop = t_interval[:]
     t_start_index = np.abs(t_array[:] - t_start).argmin()
     t_stop_index  = np.abs(t_array[:] - t_stop).argmin()
-    t_array = t_array[t_start_index:t_stop_index]
+    t_array = t_array[t_start_index:t_stop_index] - t_array[t_start_index]
     fig = pl.figure(figsize=[10, 10])
-    ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], frameon=False)
+    ax = fig.add_axes([0.5, 0.1, 0.4, 0.8], frameon=False)
     # Plot the electrodes
     ax.scatter(Mea.elec_z, Mea.elec_y, color='b')
     # Plot the neuron
     x = np.array([cell.xstart/1000, cell.xmid/1000, cell.xend/1000])
     y = np.array([cell.ystart/1000, cell.ymid/1000, cell.yend/1000])
     z = np.array([cell.zstart/1000, cell.zmid/1000, cell.zend/1000])
+    studied_comps = [0]#cell.get_idx_section('apic[63]')
     for comp in xrange(n_compartments):
-        pl.plot((z[0,comp], z[2,comp]), (y[0,comp],y[2,comp]), color='k', lw=cell.diam[comp])
+        if comp in studied_comps:
+            segment_color = 'g'
+        else:
+            segment_color = 'grey'
+        pl.plot((z[0,comp], z[2,comp]), (y[0,comp],y[2,comp]), \
+                color=segment_color, lw=3*cell.diam[comp])
     signal_at_elec = signal_at_elec[:,t_start_index:t_stop_index]
-    time_factor = 1./(t_stop - t_start)*Mea.electrode_separation/2
+    close_sig = close_sig[:,t_start_index:t_stop_index]
+    time_factor = 1./(t_stop - t_start)*Mea.electrode_separation/2*5
     signal_range = np.max(signal_at_elec) - np.min(signal_at_elec)
-    pot_factor  = electrode_separation/signal_range
+    pot_factor  = electrode_separation/signal_range * 5
     for elec in xrange(n_elecs):
         t = t_array*time_factor + Mea.elec_z[elec]
         trace = (signal_at_elec[elec])*pot_factor + Mea.elec_y[elec]
-        ax.plot(t, trace, color='r', lw = 0.5)
-        #ax.plot(spike_at_t*time_factor + Mea.elec_z[elec], \
-        #        np.ones(len(spike_at_t)) * Mea.elec_y[elec], 'o', color='r')
+        close_trace = (close_sig[elec])*pot_factor  + Mea.elec_y[elec]
+        ax.plot(t, trace, color='r', lw = 3.)
+        ax.plot(t, close_trace, color='b', lw=3.)
     #ax.axis([-0.1, 0.1, -0.1, 0.1])           
     #ax.axis([1.1*np.min(Mea.elec_z),1.1*np.max(Mea.elec_z) , 1.1*np.min(Mea.elec_y),1.1*np.max(Mea.elec_y) ])
     ax.axis('equal')
-    ax.axis([-.15,0.25, -0.2,1.3 ])
+    ax.axis([-0.1,0.1, 0.6,1. ])
     ax.plot([0.075, 0.075  + electrode_separation/2], [-0.099, -0.099], color='k', lw = 3)
     ax.text(0.075, -0.105, '%g ms' % int(t_stop-t_start))
     
@@ -44,8 +174,8 @@ def plot_interval_on_all_elecs(cell, signal_at_elec, t_interval, Mea):
     ax.plot([0.1, 0.1], [-0.09, -0.09 + electrode_separation], color='r', lw=2)
     ax.text(0.101, -0.09 +electrode_separation/2 , '%g $\mu$V' % int(signal_range))
 
-    pl.xlabel('z [mm]')
-    pl.ylabel('y [mm]')
+    #pl.xlabel('z [mm]')
+    #pl.ylabel('y [mm]')
     #ax.set_xticks([])
     #ax.set_yticks([])
 
@@ -65,6 +195,81 @@ def plot_interval_on_all_elecs(cell, signal_at_elec, t_interval, Mea):
     ## #ax.axis([150,200, -1.5,1])
     #pl.savefig('morph_n_currents.png')
     pl.show()
+
+def plot_comp_effect_on_elec(cell, studied_comps, close_sig, signal_at_elec,\
+                             t_interval, Mea):
+    pl.close('all')
+    n_elecs = Mea.n_elecs
+    n_compartments = len(cell.imem[:,0])
+    electrode_separation = Mea.electrode_separation
+    t_array = cell.tvec
+    t_start, t_stop = t_interval[:]
+    t_start_index = np.abs(t_array[:] - t_start).argmin()
+    t_stop_index  = np.abs(t_array[:] - t_stop).argmin()
+    t_array = t_array[t_start_index:t_stop_index]
+    fig = pl.figure(figsize=[10, 10])
+    title_ax = fig.add_axes([0.,0.,0.5,0.9], frameon=False)
+    title_ax.set_xticks([])
+    title_ax.set_yticks([])
+    
+    title_ax.set_title('Blue: Total signal\n Red: Only red comps.')
+    
+    ax = fig.add_axes([0.5, 0.1, 0.4, 0.9], frameon=False)
+    # Plot the electrodes
+   
+    # Plot the neuron
+    x = np.array([cell.xstart/1000, cell.xmid/1000, cell.xend/1000])
+    y = np.array([cell.ystart/1000, cell.ymid/1000, cell.yend/1000])
+    z = np.array([cell.zstart/1000, cell.zmid/1000, cell.zend/1000])
+    #studied_comps = cell.get_idx_section('apic[63]')
+    #studied_comps = cell.get_idx_section('soma[0]')
+    for comp in xrange(n_compartments):
+        if comp in studied_comps:
+            segment_color = 'r'
+        else:
+             segment_color = 'grey'
+        pl.plot((z[0,comp], z[2,comp]), (y[0,comp],y[2,comp]), \
+                color=segment_color, lw=1*cell.diam[comp])
+        
+    ax.scatter(Mea.elec_z, Mea.elec_y, color='b', s = 50)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.axis('equal')
+    
+    ax2 = fig.add_axes([0.1, 0.1, 0.3, 0.2], frameon=False)
+    signal_at_elec = signal_at_elec[0,t_start_index:t_stop_index]
+    close_sig = close_sig[0,t_start_index:t_stop_index]
+    ax2.plot(t_array, signal_at_elec, color='b', lw = 3.)
+    ax2.plot(t_array, close_sig, color='r', lw=3.)
+    ax2.set_xlabel('Time [ms]')
+    ax2.set_ylabel('Pot. at electrode [$\mu$ V]')
+    ax2.set_title('TTX')
+    ax2.axis([t_start,t_stop, -40, 40])
+    ax2.plot([t_start,t_stop], [-35,-35], lw=2, color='m')
+    ax2.plot([t_start,t_stop], [35,35], lw=2, color = 'm')
+    #pl.xlabel('z [mm]')
+    #pl.ylabel('y [mm]')
+
+
+    ## ax.set_title('Location-dependent extracellular spike shapes')
+    
+    ## #plotting the soma trace    
+    ## ax = fig.add_axes([0.75, 0.55, 0.2, 0.35])
+    ## ax.plot(tvec, somav)
+    ## ax.set_title('Somatic action-potential')
+    ## ax.set_ylabel(r'$V_\mathrm{membrane}$ (mV)')
+    ## #plotting the synaptic current
+    ## ax = fig.add_axes([0.75, 0.1, 0.2, 0.35])
+    ## ax.plot(tvec, synapses[0].i)
+    ## ax.set_title('Synaptic current')
+    ## ax.set_ylabel(r'$i_\mathrm{synapse}$ (nA)')
+    ## ax.set_xlabel(r'time (ms)')
+    ## #ax.axis([150,200, -1.5,1])
+    #pl.savefig('morph_n_currents.png')
+    pl.show()
+
+
+    
 
 def plot_electrodes_and_neuron(cell,  Mea):
     pl.close('all')
@@ -89,18 +294,19 @@ def plot_electrodes_and_neuron(cell,  Mea):
  
     pl.show()
 
-
-
-
-def plot_neuron_from_side(cell, Mea, set_up_parameters):
+def plot_neuron_from_side(cell, studied_comps, Mea, set_up_parameters):
     pl.figure(figsize=(8, 5))
     pl.subplot(121)
     n_compartments = len(cell.imem[:,0])
     #pl.plot(cell.xmid/1000, cell.ymid/1000, 'o', color='w')
     for comp in xrange(n_compartments):
+        if comp in studied_comps:
+            sec_color = 'r'
+        else:
+            sec_color = 'k'
         pl.plot((cell.xstart[comp]/1000, cell.xend[comp]/1000),\
                 (cell.ystart[comp]/1000, cell.yend[comp]/1000),\
-                color='k', lw=cell.diam[comp])
+                color=sec_color, lw=cell.diam[comp])
     pl.title('red=electrode plane, \n blue=tissue plane')
     #pl.axis([-0.1,1.5, -0.1, 1.5])
     pl.axis('equal')

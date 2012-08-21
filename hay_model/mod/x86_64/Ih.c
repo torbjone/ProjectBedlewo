@@ -143,7 +143,7 @@ static void nrn_alloc(_prop)
  	hoc_register_cvode(_mechtype, _ode_count, _ode_map, _ode_spec, _ode_matsol);
  	hoc_register_tolerance(_mechtype, _hoc_state_tol, &_atollist);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 Ih /home/torbjone/CRCNS/L5bPCmodelsEH/mod/x86_64/Ih.mod\n");
+ 	ivoc_help("help ?1 Ih /home/torbjone/bedlewo/project/hay_model/mod/x86_64/Ih.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }
@@ -272,7 +272,7 @@ for (_iml = 0; _iml < _cntml; ++_iml) {
 
 static double _nrn_current(double* _p, Datum* _ppvar, Datum* _thread, _NrnThread* _nt, double _v){double _current=0.;v=_v;{ {
    gIh = gIhbar * m ;
-   ihcn = gIh * ( v - ehcn ) ;
+   ihcn = gIh * ( v - ehcn ) * 0.0 ;
    }
  _current += ihcn;
 

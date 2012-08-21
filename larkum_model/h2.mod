@@ -38,7 +38,7 @@ INITIAL {
 
 BREAKPOINT {
 	SOLVE states METHOD cnexp
-	i = q*ghbar*(v-eh)
+	i = q*ghbar*(v-eh)  
 
 }
 

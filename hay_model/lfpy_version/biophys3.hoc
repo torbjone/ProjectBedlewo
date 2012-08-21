@@ -16,6 +16,11 @@
 // 08.06.2012 ehagen@umb.no
 
 
+// Added glutamate stimulation by Torbjørn Ness
+//
+// 20.08.2012 
+
+
 proc biophys() {
 	forall {
 	  insert pas
@@ -91,3 +96,8 @@ proc biophys() {
 delete_axon()
 geom_nseg()
 biophys()
+
+objref somam, somah
+somam = new Vector()
+somah = new Vector()
+//forall psection()

@@ -18,7 +18,9 @@ modl_reg(){
     fprintf(stderr," Nap_Et2.mod");
     fprintf(stderr," SK_E2.mod");
     fprintf(stderr," SKv3_1.mod");
+    fprintf(stderr," ampa.mod");
     fprintf(stderr," epsp.mod");
+    fprintf(stderr," glutamate.mod");
     fprintf(stderr, "\n");
   }
   _CaDynamics_E2_reg();
@@ -33,5 +35,7 @@ modl_reg(){
   _Nap_Et2_reg();
   _SK_E2_reg();
   _SKv3_1_reg();
+  _ampa_reg();
   _epsp_reg();
+  _glutamate_reg();
 }

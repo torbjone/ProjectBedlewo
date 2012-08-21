@@ -35,7 +35,7 @@ STATE	{
 BREAKPOINT	{
 	SOLVE states METHOD cnexp
 	gIh = gIhbar*m
-	ihcn = gIh*(v-ehcn)
+	ihcn = gIh*(v-ehcn) * 0.0 : CHANGED !!! Ih blocker
 }
 
 DERIVATIVE states	{

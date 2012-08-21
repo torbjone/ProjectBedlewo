@@ -182,7 +182,7 @@ static void nrn_alloc(_prop)
      _nrn_thread_reg(_mechtype, 0, _thread_cleanup);
   hoc_register_dparam_size(_mechtype, 2);
  	hoc_register_var(hoc_scdoub, hoc_vdoub, hoc_intfunc);
- 	ivoc_help("help ?1 epsp /home/torbjone/CRCNS/L5bPCmodelsEH/mod/x86_64/epsp.mod\n");
+ 	ivoc_help("help ?1 epsp /home/torbjone/bedlewo/project/hay_model/mod/x86_64/epsp.mod\n");
  hoc_register_limits(_mechtype, _hoc_parm_limits);
  hoc_register_units(_mechtype, _hoc_parm_units);
  }

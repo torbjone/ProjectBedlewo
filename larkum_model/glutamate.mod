@@ -12,10 +12,10 @@ NEURON {
 	POINT_PROCESS glutamate
 	USEION ca READ cai WRITE ica VALENCE 2
 	NONSPECIFIC_CURRENT inmda,iampa
-	RANGE e ,gmax,ntar,local_v,inmda,iampa,gh
+	RANGE e ,gmax,ntar,local_v,inmda,iampa,gh
 	RANGE del,Tspike,Nspike
 	RANGE gnmda,gampa
-	GLOBAL n, gama,tau1,tau2,tau_ampa,tauh,cah
+	GLOBAL n, gama,tau1,tau2,tau_ampa,tauh,cah
 }
 
 UNITS {
@@ -32,9 +32,9 @@ PARAMETER {
 	gmax=1	(nS)
 	e= 0.0	(mV)
 	tau1=90	(ms)	
-	tau2=5	(ms)	
+	tau2=4	(ms)	: CHANGED!!!
 	tau_ampa=2	(ms)	
-	n=0.25 	(/mM)	
+	n=0.2 	(/mM)	 : CHANGED!!!
 	gama=0.08 	(/mV) 
 	dt (ms)
 	ntar=.3	:NMDA to AMPA ratio
@@ -42,7 +42,7 @@ PARAMETER {
 	del=30	(ms)
 	Tspike=10	(ms)
 	Nspike=1
-	cah   = 10	(/ms)		: max act rate  
+	cah   = 8	(/ms)		: max act rate  CHANGED!!!
 	tauh   = 1000	(/ms)		: max deact rate 
 }
 
@@ -60,7 +60,6 @@ STATE {
 	B (nS)
 	gampa
 	h		(nS)
-
 }
 
 INITIAL {
@@ -69,11 +68,9 @@ INITIAL {
 	h=0
 	A=0
 	B=0
-
 }    
 
 BREAKPOINT {  
-    
 	LOCAL count
 	SOLVE state METHOD cnexp
 	FROM count=0 TO Nspike-1 {
@@ -86,8 +83,8 @@ BREAKPOINT {
 
 	gnmda=(A-B)/(1+n*exp(-gama*v) )
 	gh=(exp(-h))
-	inmda =(1e-3)* gnmda * gh * (v-e)
-	ica=inmda/10
+	inmda =(1e-3)* gnmda * gh * (v-e) 
+	ica=inmda/10 
 	iampa= (1e-3)*gampa* (v- e)
 	local_v=v
 }

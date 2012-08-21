@@ -9,6 +9,9 @@ pl.rcParams.update({'font.size' : 12,
     'figure.facecolor' : '1',
     'wspace' : 0.5, 'hspace' : 0.5})
 
+
+
+
 def plot_cell_compartments(cell):
     for comp_idx in xrange(len(cell.xmid)):
         pl.plot(cell.zmid[comp_idx], cell.ymid[comp_idx],\
@@ -16,30 +19,67 @@ def plot_cell_compartments(cell):
     pl.show()
     pl.close('all')
 
+def plot_sec(cell, sec):
+    secs = cell.get_idx_section(sec)
+    print "Sections:", secs
+    for i in xrange(cell.xend.size):
+        if i in secs:
+            col = 'r'
+        else:
+            col = 'k'
+        pl.plot([cell.zstart[i],cell.zend[i]],[cell.ystart[i],cell.yend[i]],color=col)
+    pl.show()
+
 def plotstuff(cell, clamp_1, clamp_2):
     fig = pl.figure(figsize=[12, 8])   
-    ax = fig.add_axes([0.1, 0.7, 0.5, 0.2])
-    ax.plot(cell.tvec,cell.vmem[0,:])
-    ax.plot(cell.tvec,cell.vmem[cell.apic_11,:])
-    ax.plot(cell.tvec,cell.vmem[cell.apic_58,:])
-    ax.plot(cell.tvec,cell.vmem[cell.apic_59,:])
+    ax = fig.add_axes([0.1, 0.7, 0.3, 0.2])
+    comps = [0, 756, 644, 801, 612, 623,743, 699]
+    if 0:
+        ax.plot(cell.tvec, np.array(neuron.h.rec_som_v))
+        ax.plot(cell.tvec, np.array(neuron.h.rec_a11_v))
+        ax.plot(cell.tvec, np.array(neuron.h.rec_a58_v))
+        ax.plot(cell.tvec, np.array(neuron.h.rec_a59_v))
+        ax.plot(cell.tvec, np.array(neuron.h.rec_a63_v))
+    else:
+        for comp in comps:
+            ax.plot(cell.tvec,cell.vmem[comp,:])
+            
+        #ax.plot(cell.tvec,cell.vmem[80,:])
+        #ax.plot(cell.tvec,cell.vmem[312,:])
+        #ax.plot(cell.tvec,cell.vmem[100,:])
+        #ax.plot(cell.tvec,cell.vmem[412,:])
+    ax.axis([0,120,-80,40])
     ax.set_xlabel('Time [ms]')
-    ax.set_ylabel('Soma trans. current')
+    ax.set_ylabel('Membrane potential [mV]')
     
-    ax = fig.add_axes([0.1, 0.4, 0.5, 0.2])
-    for i in xrange(len(cell.synapses)):
-        ax.plot(cell.tvec,cell.synapses[i].i,color=cell.synapses[i].color)
+    ax = fig.add_axes([0.1, 0.4, 0.3, 0.2])
+    #for i in xrange(len(cell.synapses)):
+    #    ax.plot(cell.tvec,cell.synapses[i].i,color=cell.synapses[i].color)
+    for i in xrange(len(cell.imem[:,0])):
+        ax.plot(cell.tvec,cell.imem[i,:])
     ax.set_xlabel('Time [ms]')
-    ax.set_ylabel('Syn. i [nA]')
+    ax.set_ylabel('imem [nA]')
 
     stim_array = np.sum(cell.imem, axis=0)
-    ax = fig.add_axes([0.1, 0.1, 0.5, 0.2])
-    ax.plot(cell.tvec,stim_array)
+    ax = fig.add_axes([0.1, 0.1, 0.3, 0.2])
+    if 1:
+        for comp in comps:
+            ax.plot(cell.tvec,cell.imem[comp,:])
+    else:
+        ax.plot(cell.tvec,stim_array)
     ax.set_xlabel('Time [ms]')
     ax.set_ylabel('Syn. i [nA]')
     ax = fig.add_axes([0.65, 0.05, 0.25, 1], frameon=False)
+    secs = cell.get_idx_section('apic[40]')
+    secs = np.append(secs, cell.get_idx_section('apic[61]'))
+    secs = np.append(secs, cell.get_idx_section('apic[67]'))
+    #print "Sections:", secs
     for i in xrange(cell.xend.size):
-        ax.plot([cell.zstart[i],cell.zend[i]],[cell.ystart[i],cell.yend[i]],color='k')
+        if i in secs or i in [623,743, 699]:
+            col = 'r'
+        else:
+            col = 'k'
+        ax.plot([cell.zstart[i],cell.zend[i]],[cell.ystart[i],cell.yend[i]],color=col, lw = cell.diam[i])
     for i in xrange(len(cell.synapses)):
         ax.plot([cell.synapses[i].z],[cell.synapses[i].y],\
             color=cell.synapses[i].color,marker=cell.synapses[i].marker)
@@ -51,6 +91,7 @@ def plotstuff(cell, clamp_1, clamp_2):
     pl.axis(pl.array(pl.axis())*1.2)
     ax.set_xticks([])
     ax.set_yticks([])
+    #pl.show()
     pl.savefig('example_fig.png')
     pl.close('all')
 
@@ -155,7 +196,7 @@ def simple_plot_2D(cell, plot_range, clamp_1, clamp_2):
     #ica = cell.rec_variables['ica'][:,start_t_ixd:stop_t_ixd]
     #cai = cell.rec_variables['cai'][:,start_t_ixd:stop_t_ixd]
     imem = cell.imem[:,start_t_ixd:stop_t_ixd]
-    signal = vmem
+    signal = imem
     n_tsteps = len(vmem[0,:])
     x = cell.xmid
     y = cell.ymid

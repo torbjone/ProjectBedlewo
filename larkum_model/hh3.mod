@@ -60,10 +60,8 @@ BREAKPOINT {
 	SOLVE states
 
 	ina = gnabar*h*s^sN*(v - ena)*m^mN
-	ik = gkbar*(v - ek)*n^nN+gkbar2*(v - ek)*n2^nN
-
-
-	il = gl*(v - el)
+	ik = gkbar*(v - ek)*n^nN    +gkbar2*(v - ek)*n2^nN
+	il = gl*(v - el) 
 }
 
 PROCEDURE states() {	: exact when v held constant

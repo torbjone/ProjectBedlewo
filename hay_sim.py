@@ -5,25 +5,25 @@ import os
 import sys
 import neuron
 from plotting import plotstuff, simple_plot_2D,\
-     plot_cell_compartments
-from tools import push_simulation_to_folder, analyze_neuron
+     plot_cell_compartments, plot_sec
+from tools import push_simulation_to_folder, analyze_neuron, find_sec_from_comp
 sim_folder = 'hay_model/'
 LFPy.cell.neuron.load_mechanisms(sim_folder + '/mod')
-
+pl.seed(999)
 cellParameters = {
     'morphology' : sim_folder+'lfpy_version/morphologies/cell1.hoc',
-    'rm' : 30000,               # membrane resistance
-    'cm' : 1.0,                 # membrane capacitance
-    'Ra' : 100,                 # axial resistance
+    #'rm' : 30000,               # membrane resistance
+    #'cm' : 1.0,                 # membrane capacitance
+    'Ra' : 80,                 # axial resistance
     'v_init' : -80,             # initial crossmembrane potential
-    'e_pas' : -90,              # reversal potential passive mechs
-    'passive' : True,           # switch on passive mechs
-    'nsegs_method' : 'lambda_f',# method for setting number of segments,
-    'lambda_f' : 100,           # segments are isopotential at this frequency
+    #'e_pas' : -90,              # reversal potential passive mechs
+    #'passive' : True,           # switch on passive mechs
+    #'nsegs_method' : 'lambda_f',# method for setting number of segments,
+    #'lambda_f' : 100,           # segments are isopotential at this frequency
     'timeres_NEURON' : 2**-4,   # dt of LFP and NEURON simulation.
     'timeres_python' : 2**-4,
     'tstartms' : -50,          #start time, recorders start at t=0
-    'tstopms' : 100,           #stop time of simulation
+    'tstopms' : 120,           #stop time of simulation
     'custom_code'  : [sim_folder+'lfpy_version/custom_codes.hoc', \
                       sim_folder+'lfpy_version/biophys3.hoc'],
     # will if given list of files run this file
@@ -110,6 +110,7 @@ simulationParameters = {
     'rec_imem' : True,  # Record Membrane currents during simulation
     'rec_isyn' : True,  # Record synaptic currents
     'rec_vmem' : True,    #record membrane potential for all compartments
+    #'rec_variables': ['ina_NaTa_t'],
 }
 
 def get_cell(output_folder, do_simulation = True):
@@ -128,6 +129,52 @@ def get_cell(output_folder, do_simulation = True):
     cell = LFPy.Cell(**cellParameters)
     cell.set_rotation(x = -pl.pi/2)
     cell.set_rotation(y = pl.pi/2)
+    #find_sec_from_comp(cell, 756)
+    cell.set_pos(xpos = -25)
+    #cell.set_rotation(x = pl.pi/2)
+    #cell.set_rotation(y = -pl.pi/2)
+    #cell.set_rotation(y = pl.pi/10)
+    cell.set_rotation(z = -pl.pi/165)
+
+
+    
+    #find_sec_from_comp(cell, 644)
+    #find_sec_from_comp(cell, 801)
+    #plot_sec(cell, 'apic[76]')
+    #sys.exit()
+    def insert_glutamate_stim(cell, section = 'apic[63]', site = 0.5):
+        gmaxS=10
+        neuron.h('access %s' %section)
+        glut_syn = neuron.h.glutamate(site)
+        glut_syn.delay = 50
+        glut_syn.ntar = 1.3
+        glut_syn.gmax = gmaxS
+        glut_syn.Nspike=3
+        glut_syn.Tspike=20
+        return glut_syn
+
+    def insert_many_glutamate_stim(cell, nSyn = 500):
+	import random
+        gmaxS=1
+	syn_array = []
+	i = 0
+	while i < nSyn:
+	    apic_sec = random.randint(0,108)
+	    section = 'apic[%d]' % apic_sec
+	    comps = cell.get_idx_section(section)
+	    idx = random.choice(comps)
+	    if cell.ymid[idx] > 600:
+	        #syns_positions.append(
+		neuron.h('access %s' % section)
+		syn_array.append(neuron.h.glutamate(random.uniform(0.1,0.95)))
+		syn_array[-1].delay = 50
+		syn_array[-1].ntar = 1
+		syn_array[-1].gmax = gmaxS
+		syn_array[-1].Nspike=3
+		syn_array[-1].Tspike=20
+		i += 1
+        return syn_array#, syns_positions
+    
     if do_simulation:
         os.system('cp %s %s' %(sys.argv[0], output_folder))
         np.save(output_folder + 'x_start.npy', cell.xstart)
@@ -137,15 +184,28 @@ def get_cell(output_folder, do_simulation = True):
         np.save(output_folder + 'y_end.npy', cell.yend)
         np.save(output_folder + 'z_end.npy', cell.zend)
         np.save(output_folder + 'diam.npy', cell.diam)
+
+        syn1 = insert_glutamate_stim(cell, \
+                section = find_sec_from_comp(cell, 615), site = 0.5)
+        syn2 = insert_glutamate_stim(cell, \
+                section = find_sec_from_comp(cell, 646), site = 0.59)
+        syn3 = insert_glutamate_stim(cell, \
+                section = find_sec_from_comp(cell, 671) , site = 0.5)
+        syn4 = insert_glutamate_stim(cell, \
+                 section = find_sec_from_comp(cell, 623), site = 0.2)
+        syn5 = insert_glutamate_stim(cell, \
+                 section = find_sec_from_comp(cell, 628), site = 0.9)
+        syn6 = insert_glutamate_stim(cell, \
+                section = find_sec_from_comp(cell, 657), site = 0.8) 
         #currentClamp_1 = LFPy.StimIntElectrode(cell, **clamp_1)
         #currentClamp_2 = LFPy.StimIntElectrode(cell, **clamp_2)
-        insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
-        insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
-        insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
-
-        neuron.h('objref n_vec')
-        neuron.h('n_vec = new Vector()')
-        neuron.h('n_vec.record(&soma.m_hh(0.5))')
+        #insert_synapses(synapseParameters_AMPA, **insert_synapses_AMPA_args)
+        #insert_synapses(synapseParameters_NMDA, **insert_synapses_NMDA_args)
+        #insert_synapses(synapseParameters_GABA_A, **insert_synapses_GABA_A_args)
+        #syn_array = insert_many_glutamate_stim(cell, nSyn = 100)
+        #neuron.h('objref n_vec')
+        #neuron.h('n_vec = new Vector()')
+        #neuron.h('n_vec.record(&soma.m_hh(0.5))')
         
         cell.simulate(**simulationParameters)
         np.save(output_folder + 'imem.npy', cell.imem)
@@ -162,7 +222,7 @@ def get_cell(output_folder, do_simulation = True):
 if __name__ == '__main__':
     output_folder = 'hay_results/initial_test/'
     do_simulation = True
-    plot_range = [70,85]
+    plot_range = [49,140]
     try:
         os.mkdir(output_folder)
     except(OSError):

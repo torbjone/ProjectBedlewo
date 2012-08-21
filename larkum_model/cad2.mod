@@ -77,7 +77,7 @@ DERIVATIVE state {
 	if (drive_channel <= 0.) { drive_channel = 0. }	: cannot pump inward
 
 	ca' = drive_channel + (cainf-ca)/taur
-	cai = ca
+	cai = ca 
 }
 
 

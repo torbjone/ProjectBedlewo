@@ -40,7 +40,7 @@ STATE	{
 BREAKPOINT	{
 	SOLVE states METHOD cnexp
 	gNaTs2_t = gNaTs2_tbar*m*m*m*h
-	ina = gNaTs2_t*(v-ena)
+	ina = gNaTs2_t*(v-ena) 
 }
 
 DERIVATIVE states	{

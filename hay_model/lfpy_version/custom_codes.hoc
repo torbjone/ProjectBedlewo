@@ -137,3 +137,6 @@ proc delete_axon(){
   access soma
 }
 
+
+
+

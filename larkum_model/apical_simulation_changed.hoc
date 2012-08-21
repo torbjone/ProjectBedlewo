@@ -327,7 +327,7 @@ access apic[63]
 objref synS1
 synS1 = new glutamate(0.9)
 synS1.ntar=1.3
-synS1.gmax=0
+synS1.gmax=30
 synS1.del=50
 synS1.Nspike=3
 synS1.Tspike=20
@@ -336,7 +336,7 @@ access apic[73]
 objref synS2
 synS2 = new glutamate(0.59)
 synS2.ntar=1.3
-synS2.gmax=0
+synS2.gmax=30
 synS2.del=50
 synS2.Nspike=3
 synS2.Tspike=20
@@ -345,7 +345,7 @@ access apic[73]
 objref synS3
 synS3 = new glutamate(0.8)
 synS3.ntar=1.3
-synS3.gmax=0
+synS3.gmax=30
 synS3.del=50
 synS3.Nspike=3
 synS3.Tspike=20

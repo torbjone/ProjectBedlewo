@@ -5,7 +5,8 @@ import numpy as np
 from sys import stdout
 import os
 from plot_mea import plot_interval_on_all_elecs, plot_neuron_from_side,\
-     animate_MEA, plot_electrodes_and_neuron, plot_comp_effect_on_elec
+     animate_MEA, plot_electrodes_and_neuron, plot_comp_effect_on_elec,\
+     plot_alot
 from tools import analyze_neuron
 
 def make_mapping(cell, Mea, set_up_parameters, output_folder, do_calculation):
@@ -135,30 +136,30 @@ if __name__ == '__main__':
     neuron_folder = 'larkum_TTX_very_superthreshold/'
     output_folder = 'extracellular_test/'
     elec_x = -set_up_parameters['slice_thickness']/2
-    Mea = MEA.HD_MEA_CMOS128(elec_x)
+    from hay_sim import get_cell
+    cell = get_cell(neuron_folder, do_simulation = False)
+    
     #Mea = make_test_mea()
-    from larkum_sim import get_cell
-    cell = get_cell(neuron_folder, False)
+
     
     #cell = make_test_cell()
-    Moi = MoI.MoI(set_up_parameters, True)
+    Moi = MoI.MoI(set_up_parameters, debug = False)
     #plot_electrodes_and_neuron(cell, Mea)
-    studied_comps = cell.get_idx_section('apic[63]')
+    studied_comps = np.r_[0]#615,646, 671, 623, 628,657]
+    Mea = MEA.HD_MEA_CMOS128_Fig(elec_x, cell, studied_comps[0])
+    
     #plot_neuron_from_side(cell, studied_comps, Mea, set_up_parameters)
-
-    mapping = make_mapping(cell, Mea, set_up_parameters, output_folder, True)
-    signal = find_signal_at_electrodes(cell, Mea, mapping, output_folder, True)
-    
- 
-    
+    #sys.exit()
+    mapping = make_mapping(cell, Mea, set_up_parameters, output_folder, False)
+    signal = find_signal_at_electrodes(cell, Mea, mapping, output_folder, False)
     #studied_comps = cell.get_idx_section('soma[0]')
-    close_sig = find_signal_from_choosen_comps(cell, \
-                studied_comps, Mea, mapping, output_folder, True)
+    #close_sig = find_signal_from_choosen_comps(cell, \
+    #            studied_comps, Mea, mapping, output_folder, True)
     
+    plot_alot(signal, cell, [0,120], Mea, out_name='a_Ihblock.png')
     #print mapping
     #plot_interval_on_all_elecs(cell, close_sig,signal, [0,3], Mea)
-    plot_comp_effect_on_elec(cell, close_sig,signal,[49,120], Mea)
-    
+    #plot_comp_effect_on_elec(cell, studied_comps, close_sig,signal,[49,120], Mea)
     #animate_MEA(signal, cell, Mea, [5,10])
     #analyze_neuron(cell, mapping, Mea, signal_range = [5,10])
 

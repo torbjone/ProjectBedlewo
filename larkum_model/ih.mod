@@ -47,7 +47,7 @@ INITIAL {
 
 BREAKPOINT {
 	SOLVE state METHOD cnexp
-	Iqq = ghdbar*qq*(v-ehd)
+	Iqq = ghdbar*qq*(v-ehd) *0 : CHANGED!!!!
 }
 
 FUNCTION alpha(v(mV)) {

@@ -7,6 +7,16 @@ import sys
 #seed for random generation
 pl.seed(0)
 
+def find_sec_from_comp(cell, comp):
+    name_list = []
+    for sec in cell.allseclist:
+        name_list.append(str(sec.name()))
+    for name in name_list:
+        comps = cell.get_idx_section(name)
+        if comp in comps:
+            print comp, name
+            return name
+        
 def push_simulation_to_folder(save_to_folder, data_from_folder):
     print "Copying all simulation results from %s " %data_from_folder\
           +"and simulation file to folder %s." % save_to_folder

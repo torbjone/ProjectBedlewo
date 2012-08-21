@@ -51,7 +51,6 @@ BREAKPOINT {
 	SOLVE states METHOD cnexp
 	ghd = ghdbar*l
 	i = ghd*(v-ehd)
-
 }
 
 
